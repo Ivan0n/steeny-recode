@@ -1,0 +1,426 @@
+/* === THEME VARIABLES === */
+:root {
+  --bg-light: #ffffff;
+  --bg-dark: #111827;
+
+  --text-on-light: #111827; /* чёрный текст на светлом фоне */
+  --text-on-dark: #f9fafb;  /* белый текст на тёмном фоне */
+
+  --bg-aside-light: #f9fafb;
+  --bg-aside-dark: #111827;
+
+  --bg-main-light: #ffffff;
+  --bg-main-dark: #1f2937;
+
+  --menu-bg-light: #f3f4f6;
+  --menu-bg-dark: #1f2937;
+
+  --menu-fg-light: #111827;
+  --menu-fg-dark: #f9fafb;
+
+  --menu-active-bg-light: #111827;
+  --menu-active-fg-light: #ffffff;
+
+  --menu-active-bg-dark: #f9fafb;
+  --menu-active-fg-dark: #111827;
+
+  --track-list-bg-light: #f8fafc;
+  --track-list-bg-dark: #0b1220;
+}
+
+/* === BASE === */
+body {
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+  background: var(--bg-light);
+  color: var(--text-on-light);
+  transition: background-color .25s ease, color .25s ease;
+}
+
+html.dark body {
+  background: var(--bg-dark);
+  color: var(--text-on-dark);
+}
+
+/* Наследование цвета */
+* { color: inherit; transition: color .25s ease, background-color .25s ease; }
+
+/* === LAYOUT === */
+aside {
+  background: var(--bg-aside-light);
+  color: var(--menu-fg-light);
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 40;
+}
+html.dark aside {
+  background: var(--bg-aside-dark);
+  color: var(--menu-fg-dark);
+}
+
+main, #content {
+  background: var(--bg-main-light);
+}
+html.dark main, html.dark #content {
+  background: var(--bg-main-dark);
+}
+
+/* === MENU === */
+.menu-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  background: var(--menu-bg-light);
+  color: var(--menu-fg-light);
+  transition: background-color .25s ease, transform .12s ease;
+}
+.menu-link:hover {
+  background: color-mix(in srgb, var(--menu-bg-light) 85%, #000);
+  transform: translateY(-1px);
+}
+.menu-link.active {
+  background: var(--menu-active-bg-light);
+  color: var(--menu-active-fg-light);
+}
+
+html.dark .menu-link {
+  background: var(--menu-bg-dark);
+  color: var(--menu-fg-dark);
+}
+html.dark .menu-link:hover {
+  background: #374151;
+}
+html.dark .menu-link.active {
+  background: var(--menu-active-bg-dark);
+  color: var(--menu-active-fg-dark);
+}
+
+/* === PLAYER === */
+footer.player {
+  background: var(--bg-light);
+  color: inherit;
+  border-top: 1px solid #e5e7eb;
+}
+html.dark footer.player {
+  background: var(--bg-main-dark);
+  border-top: 1px solid #374151;
+}
+
+/* Кнопки */
+.player-btn {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #f3f4f6;
+  border: 1px solid #e6e6e6;
+  transition: background .15s, transform .08s;
+  cursor: pointer;
+}
+.player-btn:hover { background: #e5e7eb; transform: translateY(-2px); }
+.player-btn.play { width: 56px; height: 56px; }
+
+html.dark .player-btn {
+  background: #374151;
+  border-color: #4b5563;
+}
+html.dark .player-btn:hover {
+  background: #4b5563;
+}
+
+/* === SLIDERS === */
+.seekbar,
+.volume-slider {
+  -webkit-appearance: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background .2s ease;
+  
+}
+html.purple .volume-slider{
+  background: linear-gradient(90deg, #e9d5ff 100%, #4b5563 100%);
+}
+
+.seekbar {
+  width: 100%;
+  height: 6px;
+  background: linear-gradient(90deg, #111827 0%, #d1d5db 0%);
+}
+.seekbar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #111827;
+}
+html.dark .seekbar {
+  background: linear-gradient(90deg, #f9fafb 0%, #374151 0%);
+}
+html.dark .seekbar::-webkit-slider-thumb { background: #f9fafb; }
+
+.volume-slider {
+  width: 160px; height: 6px;
+  background: linear-gradient(90deg, #111827 100%, #e6e6e6 100%);
+}
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: #111827;
+}
+html.dark .volume-slider {
+  background: linear-gradient(90deg, #f9fafb 100%, #4b5563 100%);
+}
+html.dark .volume-slider::-webkit-slider-thumb { background: #f9fafb; }
+
+/* === TRACK LIST === */
+.track-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: calc(90vh - 270px); /* подгоняй под высоту плеера и хэдера */
+  overflow-y: auto;
+  flex: 1;
+  overflow-y: auto;
+  border-radius: 8px;
+  background: var(--track-list-bg-light);
+}
+html.dark .track-list {
+  background: var(--track-list-bg-dark);
+}
+
+/* Скроллбар */
+.track-list::-webkit-scrollbar { width: 6px; }
+.track-list::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+.track-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.track-list::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+html.dark .track-list::-webkit-scrollbar-track { background: #0f1724; }
+html.dark .track-list::-webkit-scrollbar-thumb { background: #4b5563; }
+html.dark .track-list::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+/* === TRACK ROW === */
+.track-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: #ffffff;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  min-width: 0;
+}
+.track-row:hover { background: #f1f5f9; transform: translateX(2px); }
+.track-row.active { background: #eff6ff; border-left: 3px solid #000000; }
+
+html.dark .track-row { background: #1f2937; }
+html.dark .track-row:hover { background: #374151; }
+html.dark .track-row.active { background: rgba(37,99,235,0.2); border-left: 3px solid #60a5fa; }
+
+/* === TRACK INFO === */
+.track-title { font-weight: 600; font-size: 14px; }
+.track-artist { font-size: 12px; opacity: 0.8; }
+.track-number, .track-duration { font-size: 12px; opacity: 0.7; }
+
+/* === THEME TOGGLE DOT === */
+.theme-dot { transition: transform .22s ease; display:block; }
+.translate-on { transform: translateX(1.25rem); }
+
+/* === LINKS === */
+a { color: #1d4ed8; }
+a:hover { opacity: 0.8; }
+html.dark a { color: #60a5fa; }
+
+/* === HELPERS === */
+.controls-center { min-width: 320px; display: flex; gap: 18px; align-items: center; justify-content: center; }
+.left-meta { min-width: 260px; max-width: 320px; display: flex; gap: 12px; align-items: center; }
+.right-volume { min-width: 220px; display: flex; gap: 12px; align-items: center; justify-content: flex-end; }
+
+@media (max-width: 900px) {
+  .controls-center { min-width: 0; gap: 10px; }
+  .volume-slider { width: 110px; }
+  .left-meta { min-width: 160px; }
+  footer.player { padding-left: 12px; padding-right: 12px; }
+}
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #333;
+  border-radius: 9999px;
+  padding: 4px;
+  width: 220px;
+  position: relative;
+  user-select: none;
+}
+
+.theme-option {
+  flex: 1;
+  text-align: center;
+  cursor: pointer;
+  font-size: 14px;
+  z-index: 2;
+}
+
+.theme-indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: calc(33.33% - 8px);
+  border-radius: 9999px;
+  background: #7e22ce; /* фиолетовый индикатор */
+  transition: left 0.3s ease;
+  z-index: 1;
+}
+
+body {
+  color: var(--text-on-light) !important;
+}
+html.dark body {
+  color: var(--text-on-dark) !important;
+}
+
+:root {
+  --card-bg-light: #ffffff;
+  --card-bg-dark: #1f2937;   /* gray-800 */
+
+  --card-border-light: #e5e7eb; /* gray-200 */
+  --card-border-dark: #374151;  /* gray-700 */
+  --card-border-purple: #3b0764
+}
+
+.theme-card {
+  background: var(--card-bg-light);
+  border: 1px solid var(--card-border-light);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  transition: background-color .25s ease, border-color .25s ease, color .25s ease;
+}
+
+html.dark .theme-card {
+  background: var(--card-bg-dark);
+  border-color: var(--card-border-dark);
+}
+html.purple .theme-card {
+  background: var(--card-border-purple);
+  border-color: var(--card-border-purple);
+}
+html.purple #trackTitle{
+  color: var(--card-bg-light);
+}
+html.purple .track-title{
+  color: var(--card-bg-light);
+}
+html.purple #volumeSlider{
+    color: var(--card-bg-light);
+    background-color: var(--card-bg-light);
+}
+html.purple #volumeIcon{
+  color: var(--card-bg-light);
+}
+html.purple body {
+  background: #0a0013; /* почти чёрный */
+  color: #e9d5ff;      /* светлый фиолетовый текст */
+}
+
+html.purple aside {
+  background: #1a0b2e;
+  color: #e9d5ff;
+}
+html.purple main, html.purple #content {
+  background: #12001f;
+}
+
+html.purple .menu-link {
+  background: #1a0b2e;
+  color: #e9d5ff;
+}
+html.purple .menu-link:hover {
+  background: #3b0764;
+}
+html.purple .menu-link.active {
+  background: #7e22ce;   /* насыщенный фиолетовый */
+  color: #ffffff;
+}
+
+html.purple footer.player {
+  background: #1a0b2e;
+  border-top: 1px solid #3b0764;
+}
+
+html.purple .player-btn {
+  background: #3b0764;
+  border-color: #5b21b6;
+  color: #e9d5ff;
+}
+html.purple .player-btn:hover {
+  background: #6d28d9;
+}
+
+html.purple .track-list {
+  background: #0f001a;
+}
+html.purple .track-row {
+  background: #1a0b2e;
+}
+html.purple .track-row:hover {
+  background: #3b0764;
+}
+html.purple .track-row.active {
+  background: rgba(168, 85, 247, 0.25);
+  border-left: 3px solid #a855f7;
+}
+
+html.purple a {
+  color: #c084fc;
+}
+html.purple a:hover {
+  opacity: 0.8;
+}
+
+.theme-option {
+  color: #fff !important;
+}
+
+.theme-option:hover,
+.theme-option:active,
+.theme-option:focus {
+  color: #fff !important;
+}
+/* H2 и имя пользователя всегда подчиняются теме */
+html.dark h2, 
+html.dark .nameuser,
+html.purple h2, 
+html.purple .nameuser {
+  color: #fff !important;
+}
+
+html.dark .nameuser * {
+  color: var(--text-on-dark) !important;
+}
+
+html.light .nameuser * {
+  color: var(--text-on-light) !important;
+}
+html.purple .seekbar {
+  background: linear-gradient(90deg, #a855f7 0%, #3b0764 100%) !important;
+}
+html.purple .seekbar::-webkit-slider-thumb {
+  background: #e9d5ff !important;
+}
+
+html.purple .volume-slider {
+  background: linear-gradient(90deg, #3b0764 0%, #a855f7 100%) !important;
+}
+html.purple .volume-slider::-webkit-slider-thumb {
+  background: #e9d5ff !important;
+}
+#content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+  padding-bottom: 160px; /* высота плеера + отступ */
+}

@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MusicStream — Mobile</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root{--bg:#fff;--muted:#6b7280;--accent:#111827}
+    html.dark { --bg:#0b1220; --muted:#94a3b8; --accent:#f9fafb }
+    html.purple { --bg:#12001f; --muted:#c4b5fd; --accent:#e9d5ff }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+      background:var(--bg); color:var(--accent); -webkit-tap-highlight-color:transparent;
+      overflow-x: hidden;
+    }
+
+    /* main content */
+    main { padding: 16px; padding-bottom: 140px; min-height:100vh; overflow:auto; } /* <-- overflow:auto чтобы слушать скролл */
+
+    h2 { margin:0 0 12px 0; font-size:18px; }
+
+    /* track list */
+    .track-list { display:flex; flex-direction:column; gap:8px; }
+    .track-row{
+      display:flex; align-items:center; gap:12px; padding:10px; border-radius:10px;
+      background: rgba(0,0,0,0.03); cursor:pointer; overflow:hidden;
+    }
+    .track-row:hover { transform:translateX(4px); transition:transform .12s linear; }
+    .track-row .cover{ width:46px; height:46px; border-radius:8px; object-fit:cover; flex-shrink:0 }
+    .track-info{ overflow:hidden }
+    .track-title{ font-weight:600; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+    .track-artist{ font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+    .track-duration{ margin-left:auto; font-size:12px; color:var(--muted) }
+    .track-actions { display:flex; gap:8px; margin-left:8px; align-items:center }
+    .track-row.active { box-shadow: inset 4px 0 0 var(--accent); background: rgba(0,0,0,0.06) }
+
+    /* mini player */
+    #miniPlayer {
+      position:fixed; left:8px; right:8px; bottom:64px;
+      background:var(--bg); border-radius:14px; padding:10px; z-index:40;
+      box-shadow:0 6px 18px rgba(0,0,0,0.12);
+      display:flex; flex-direction:column; gap:8px;
+    }
+    #miniHeader { display:flex; gap:10px; align-items:center }
+    #miniCover { width:48px; height:48px; border-radius:10px; object-fit:cover; flex-shrink:0; }
+    #miniTitle { font-weight:600; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+    #miniArtist { font-size:12px; color:var(--muted) }
+    .mini-controls { display:flex; gap:14px; justify-content:center; align-items:center; }
+    .mini-controls button { border:none; background:transparent; font-size:18px; padding:8px; border-radius:8px }
+    .mini-progress { width:100%; height:6px; border-radius:6px; appearance:none; background:#e6e6e6 }
+
+    /* bottom nav */
+    nav.mobile-nav {
+      position:fixed; left:0; right:0; bottom:0; height:56px; display:flex; background:var(--bg);
+      border-top:1px solid rgba(0,0,0,0.06); z-index:50; align-items:center; justify-content:space-around;
+    }
+    nav.mobile-nav button {
+      display:flex; flex-direction:column; align-items:center; justify-content:center; border:none; background:transparent;
+      color:var(--muted); font-size:11px; gap:4px;
+    }
+    nav.mobile-nav button.active { color:var(--accent) }
+    nav.mobile-nav i { font-size:20px }
+
+    #fullscreenPlayer {
+      position:fixed; inset:0; display:none; z-index:90;
+      background:var(--bg); color:var(--accent);
+      flex-direction:column; justify-content:flex-start; align-items:center;
+      padding:28px 20px 40px 20px; overflow-y:auto;
+    }
+    #fullscreenPlayer.show { display:flex; animation:fsIn .25s ease both; }
+    @keyframes fsIn { from{opacity:0; transform:translateY(5%)} to{opacity:1; transform:none} }
+
+    .fs-cover {
+      width:90vw; max-width:420px; aspect-ratio:1/1;
+      border-radius:14px; object-fit:cover;
+      margin:4vh auto 20px auto; display:block;
+    }
+    .fs-title { font-size:24px; font-weight:700; text-align:center; margin-top:10px }
+    .fs-artist { text-align:center; color:var(--muted); margin-top:6px; font-size:15px }
+
+    .fs-seek { width:100%; margin-top:28px; appearance:none; height:6px; border-radius:6px; background:#e6e6e6 }
+    .fs-times { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-top:6px }
+
+    .fs-controls {
+      display:flex; gap:40px; justify-content:center; align-items:center;
+      margin-top:40px; margin-bottom:40px;
+    }
+    .fs-controls button {
+      border:none; background:transparent; font-size:28px; padding:14px;
+      border-radius:12px;
+    }
+    #fsPlay {
+      background:#000000; color:white; border-radius:50%; width:68px; height:68px;
+      display:flex; align-items:center; justify-content:center; font-size:32px;
+    }
+    .fs-close {
+      position:fixed; top:14px; right:14px; border:none; background:transparent;
+      font-size:26px; z-index:91;
+    }
+
+    /* small helpers */
+    .hidden { display:none !important; }
+
+    /* responsive comfortable spacing */
+    @media (min-width:460px){ main{padding:20px} #miniPlayer{right:24px;left:24px;bottom:74px} }
+  </style>
+</head>
+<body>
+  <main id="main"> <!-- <-- добавил id и overflow:auto выше -->
+    <div id="section-home">
+      <h2>🎵 Вся музыка</h2>
+      <div id="allTracksList" class="track-list"></div>
+    </div>
+
+    <div id="section-search" class="hidden">
+      <h2>🔍 Поиск</h2>
+      <input id="searchInput" type="text" placeholder="Искать трек или артиста..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #e6e6e6;margin-bottom:10px">
+      <div id="searchResults" class="track-list"></div>
+    </div>
+
+    <div id="section-favorites" class="hidden">
+      <h2>❤️ Любимое</h2>
+      <div id="favoritesList" class="track-list"></div>
+    </div>
+
+    <div id="section-settings" class="hidden">
+      <h2>⚙️ Настройки</h2>
+      <p>Имя: <b>{{ name }}</b></p>
+      <p>username: <b>{{ user }}</b></p>
+      <a href="/logout" style="color:#ef4444">Выйти</a>
+    </div>
+  </main>
+
+  <!-- мини-плеер -->
+  <div id="miniPlayer" class="hidden" aria-hidden="true">
+    <div id="miniHeader">
+      <img id="miniCover" src="/static/default_cover.png" alt="cover" class="mini-cover" style="width:48px;height:48px;border-radius:10px">
+      <div style="flex:1; min-width:0">
+        <div id="miniTitle" class="mini-title" style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Название</div>
+        <div id="miniArtist" style="font-size:12px;color:var(--muted)">Артист</div>
+      </div>
+      <button id="miniFavBtn" title="Избранное" style="border:none;background:transparent;font-size:18px;color:var(--muted)"><i class="fa-regular fa-star"></i></button>
+    </div>
+
+    <input id="miniSeekbar" class="mini-progress" type="range" min="0" max="100" value="0" />
+
+    <div class="mini-controls">
+      <button id="miniPrevBtn" title="Назад"><i class="fa-solid fa-backward-step"></i></button>
+      <button id="miniPlayBtn" title="Воспроизвести/Пауза"><i id="miniPlayIcon" class="fa-solid fa-play"></i></button>
+      <button id="miniNextBtn" title="Вперёд"><i class="fa-solid fa-forward-step"></i></button>
+    </div>
+  </div>
+
+  <!-- fullscreen player -->
+  <div id="fullscreenPlayer" class="hidden" aria-hidden="true" style="overflow-x: hidden;">
+    <button id="fsClose" class="fs-close" title="Закрыть"><i class="fa-solid fa-xmark"></i></button>
+    <img id="fsCover" class="fs-cover" src="/static/default_cover.png" alt="cover">
+    <div id="fsTitle" class="fs-title">Название трека</div>
+    <div id="fsArtist" class="fs-artist">Артист</div>
+
+    <input id="fsSeekbar" class="fs-seek" type="range" min="0" max="100" value="0">
+    <div class="fs-times"><span id="fsCurrent">0:00</span><span id="fsDuration" style="margin-left: 83vw;">0:00</span></div>
+
+    <div class="fs-controls">
+      <button id="fsPrev"><i class="fa-solid fa-backward-step"></i></button>
+      <button id="fsPlay"><i id="fsPlayIcon" class="fa-solid fa-play"></i></button>
+      <button id="fsNext"><i class="fa-solid fa-forward-step"></i></button>
+    </div>
+  </div>
+
+  <!-- bottom nav -->
+  <nav class="mobile-nav" role="navigation">
+    <button class="menu-link active" data-section="home"><i class="fa-solid fa-house"></i><div>Главная</div></button>
+    <button class="menu-link" data-section="search"><i class="fa-solid fa-magnifying-glass"></i><div>Поиск</div></button>
+    <button class="menu-link" data-section="favorites"><i class="fa-solid fa-heart"></i><div>Любимое</div></button>
+    <button class="menu-link" data-section="settings"><i class="fa-solid fa-gear"></i><div>Настройки</div></button>
+  </nav>
+
+  <audio id="audioPlayer"></audio>
+
+  <script>
+  // === DOM ===
+  // === DOM ===
+const audio = document.getElementById('audioPlayer');
+
+// Track lists DOM
+const allTracksList = document.getElementById('allTracksList');
+const favoritesList = document.getElementById('favoritesList');
+const searchResultsContainer = document.getElementById('searchResults');
+
+// Mini player
+const miniPlayer = document.getElementById('miniPlayer');
+const miniCover = document.getElementById('miniCover');
+const miniTitle = document.getElementById('miniTitle');
+const miniArtist = document.getElementById('miniArtist');
+const miniFavBtn = document.getElementById('miniFavBtn');
+const miniSeekbar = document.getElementById('miniSeekbar');
+const miniPlayBtn = document.getElementById('miniPlayBtn');
+const miniPlayIcon = document.getElementById('miniPlayIcon');
+const miniPrevBtn = document.getElementById('miniPrevBtn');
+const miniNextBtn = document.getElementById('miniNextBtn');
+
+// Fullscreen player
+const fullscreen = document.getElementById('fullscreenPlayer');
+const fsCover = document.getElementById('fsCover');
+const fsTitle = document.getElementById('fsTitle');
+const fsArtist = document.getElementById('fsArtist');
+const fsSeekbar = document.getElementById('fsSeekbar');
+const fsCurrent = document.getElementById('fsCurrent');
+const fsDuration = document.getElementById('fsDuration');
+const fsPlay = document.getElementById('fsPlay');
+const fsPlayIcon = document.getElementById('fsPlayIcon');
+const fsPrev = document.getElementById('fsPrev');
+const fsNext = document.getElementById('fsNext');
+const fsClose = document.getElementById('fsClose');
+
+// global
+let allTracks = [];
+let searchResults = [];
+let currentPlaylist = [];
+let currentTrackIndex = 0;
+let currentSection = 'home';
+let isPlaying = false;
+let isRepeating = false;
+
+/* ---------------- utilities ---------------- */
+function formatTime(sec) {
+  if (!isFinite(sec)) return '0:00';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return m + ':' + (s < 10 ? '0' + s : s);
+}
+
+function safeCover(url){
+  if(!url) return '/static/default_cover.png';
+  try { return encodeURI(url); } catch(e){ return '/static/default_cover.png'; }
+}
+
+function escapeHtml(s){
+  if(!s) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* --------------- DOM rows ---------------- */
+function createTrackRow(track, index, section){
+  const row = document.createElement('div');
+  row.className = 'track-row';
+  row.dataset.id = track.id;
+  row.dataset.section = section;
+  row.dataset.index = index;
+
+  const coverUrl = safeCover(track.cover);
+  const duration = track.duration ? formatTime(track.duration) : '--:--';
+
+  row.innerHTML = `
+    <img class="cover" src="${coverUrl}" alt="cover" onerror="this.onerror=null;this.src='/static/default_cover.png'">
+    <div class="track-info">
+      <div class="track-title">${escapeHtml(track.title||'Без названия')}</div>
+      <div class="track-artist">${escapeHtml(track.artist||'Неизвестно')}</div>
+    </div>
+    <div class="track-duration">${duration}</div>
+    <div class="track-actions">
+      <button class="btn-fav" title="Избранное" style="border:none;background:transparent;font-size:16px">
+        <i class="${track.favorite ? 'fa-solid fa-star' : 'fa-regular fa-star'}" style="${track.favorite ? 'color:gold' : ''}"></i>
+      </button>
+      <button class="btn-play" title="Воспроизвести" style="border:none;background:transparent;font-size:16px">
+        <i class="fa-solid fa-play"></i>
+      </button>
+    </div>
+  `;
+
+  const favBtn = row.querySelector('.btn-fav');
+  const playBtn = row.querySelector('.btn-play');
+
+  favBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleFavoriteForTrack(track, section);
+  });
+
+  playBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const idx = Number(row.dataset.index) || 0;
+    playFromSection(section, idx);
+  });
+
+  row.addEventListener('click', () => {
+    const idx = Number(row.dataset.index) || 0;
+    playFromSection(section, idx);
+  });
+
+  return row;
+}
+
+/* --------------- renders ------------------ */
+function renderAllTracks(){
+  allTracksList.innerHTML = '';
+  allTracks.forEach((t, idx) => {
+    const row = createTrackRow(t, idx, 'home');
+    allTracksList.appendChild(row);
+  });
+}
+
+async function loadFavorites(){
+  try {
+    const res = await fetch(`/playlist/favorites`);
+    const data = await res.json();
+    if(Array.isArray(data)){
+      favoritesList.innerHTML = '';
+      data.forEach((t, idx) => {
+        const orig = allTracks.find(x => x.id === t.id);
+        if(orig) t.favorite = orig.favorite;
+        const row = createTrackRow(t, idx, 'favorites');
+        favoritesList.appendChild(row);
+      });
+    }
+  } catch(err){
+    console.error('Ошибка загрузки избранных', err);
+  }
+}
+
+function renderFavorites(){
+  favoritesList.innerHTML = '';
+  const f = allTracks.filter(t => t.favorite);
+  f.forEach((t, idx) => {
+    const row = createTrackRow(t, idx, 'favorites');
+    favoritesList.appendChild(row);
+  });
+}
+
+function renderSearchResults(){
+  searchResultsContainer.innerHTML = '';
+  searchResults = searchResults.map(sr => {
+    const found = allTracks.find(t => t.id === sr.id);
+    if(found) sr.favorite = !!found.favorite;
+    return sr;
+  });
+  searchResults.forEach((t, idx) => {
+    const row = createTrackRow(t, idx, 'search');
+    row.dataset.index = idx;
+    searchResultsContainer.appendChild(row);
+  });
+}
+
+/* --------------- loading tracks ------------- */
+async function loadAllTracks(){
+  try {
+    let offset = 0;
+    const limit = 100;
+    allTracks = [];
+    while (true) {
+      const res = await fetch(`/playlist/data?offset=${offset}&limit=${limit}`);
+      const data = await res.json();
+      if (!Array.isArray(data) || data.length === 0) break;
+      allTracks.push(...data);
+      offset += data.length;
+      if (data.length < limit) break;
+    }
+    renderAllTracks();
+    renderFavorites();
+  } catch (err) {
+    console.error('Ошибка загрузки треков', err);
+  }
+}
+
+/* --------------- playback ------------------- */
+function playFromSection(section, index){
+  currentSection = section;
+  switch(section){
+    case 'home': currentPlaylist = allTracks; break;
+    case 'favorites': currentPlaylist = allTracks.filter(t=>t.favorite); break;
+    case 'search': currentPlaylist = searchResults; break;
+    default: currentPlaylist = allTracks;
+  }
+  if(!currentPlaylist || currentPlaylist.length === 0) return;
+  if(index < 0) index = 0;
+  if(index >= currentPlaylist.length) index = currentPlaylist.length -1;
+  currentTrackIndex = index;
+  loadTrack(currentTrackIndex);
+  playTrack();
+  highlightActive();
+}
+
+function loadTrack(index){
+  const track = currentPlaylist[index];
+  if(!track) return;
+  miniCover.src = safeCover(track.cover);
+  miniTitle.textContent = track.title || 'Без названия';
+  miniArtist.textContent = track.artist || 'Неизвестно';
+  fsCover.src = safeCover(track.cover);
+  fsTitle.textContent = track.title || 'Без названия';
+  fsArtist.textContent = track.artist || 'Неизвестно';
+
+  audio.src = track.src || '';
+  miniSeekbar.value = 0; fsSeekbar.value = 0;
+  fsCurrent.textContent = '0:00'; fsDuration.textContent = track.duration ? formatTime(track.duration) : '0:00';
+  updateFavUI(!!track.favorite);
+  miniPlayer.classList.remove('hidden'); miniPlayer.setAttribute('aria-hidden','false');
+  isPlaying = false;
+  syncPlayIcons();
+  highlightActive();
+}
+
+function playTrack(){
+  if(!audio.src) return;
+  audio.play().then(()=>{ isPlaying = true; syncPlayIcons(); }).catch(()=>{ isPlaying=false; syncPlayIcons(); });
+}
+function pauseTrack(){ audio.pause(); isPlaying = false; syncPlayIcons(); }
+
+function syncPlayIcons(){
+  const playClass = isPlaying ? 'fa-pause' : 'fa-play';
+  const removeClass = isPlaying ? 'fa-play' : 'fa-pause';
+  miniPlayIcon.classList.remove(removeClass); miniPlayIcon.classList.add(playClass);
+  fsPlayIcon.classList.remove(removeClass); fsPlayIcon.classList.add(playClass);
+}
+
+function playNext(){
+  if(!currentPlaylist || currentPlaylist.length===0) return;
+  currentTrackIndex = (currentTrackIndex + 1) % currentPlaylist.length;
+  loadTrack(currentTrackIndex); playTrack();
+}
+function playPrev(){
+  if(!currentPlaylist || currentPlaylist.length===0) return;
+  currentTrackIndex = (currentTrackIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
+  loadTrack(currentTrackIndex); playTrack();
+}
+
+function highlightActive(){
+  document.querySelectorAll('.track-row').forEach(r => r.classList.remove('active'));
+  const cur = currentPlaylist && currentPlaylist[currentTrackIndex];
+  if(!cur) return;
+  [allTracksList, favoritesList, searchResultsContainer].forEach(list=>{
+    const found = list.querySelectorAll('.track-row');
+    for(let i=0;i<found.length;i++){
+      if(found[i].dataset.id == cur.id){ found[i].classList.add('active'); break; }
+    }
+  });
+}
+
+/* --------------- favorites sync --------------- */
+async function toggleFavoriteForTrack(track, section){
+  if(!track || !track.id) return;
+  try {
+    if(track.favorite){
+      await fetch('/playlist/remove',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:track.id})});
+      track.favorite = false;
+    } else {
+      await fetch('/playlist/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:track.id})});
+      track.favorite = true;
+    }
+  } catch(e){ console.error('fav err', e); }
+
+  const orig = allTracks.find(t=>t.id===track.id);
+  if(orig) orig.favorite = !!track.favorite;
+
+  renderAllTracks(); renderFavorites(); renderSearchResults(); updateFavUI(!!track.favorite);
+}
+
+function updateFavUI(fav){
+  const icon = miniFavBtn.querySelector('i');
+  if(icon){
+    if(fav){ icon.className='fa-solid fa-star'; icon.style.color='gold'; } 
+    else { icon.className='fa-regular fa-star'; icon.style.color=''; }
+  }
+}
+
+/* --------------- search -------------------- */
+async function searchMusic(){
+  const q = (document.getElementById('searchInput')||{value:''}).value.trim();
+  if(!q){ searchResults=[]; renderSearchResults(); return; }
+  try {
+    const res = await fetch(`/search?query=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if(!Array.isArray(data) || data.length===0){ searchResults=[]; renderSearchResults(); return; }
+    searchResults = data.map(sr => {
+      const f = allTracks.find(t=>t.id===sr.id);
+      if(f) sr.favorite = !!f.favorite;
+      return sr;
+    });
+    renderSearchResults();
+    currentSection = 'search';
+  } catch(e){ console.error('search err', e); }
+}
+window.searchMusic = searchMusic;
+
+/* --------------- audio events -------------- */
+audio.addEventListener('loadedmetadata', () => {
+  if(isFinite(audio.duration)){
+    fsDuration.textContent = formatTime(audio.duration);
+  }
+});
+
+audio.addEventListener('timeupdate', () => {
+  if(!audio.duration || audio.duration===0) return;
+  const pct = (audio.currentTime / audio.duration) * 100;
+  miniSeekbar.value = pct; fsSeekbar.value = pct;
+  miniSeekbar.style.background = `linear-gradient(90deg,#111827 ${pct}%, #e6e6e6 ${pct}%)`;
+  fsSeekbar.style.background = `linear-gradient(90deg,#111827 ${pct}%, #e6e6e6 ${pct}%)`;
+  fsCurrent.textContent = formatTime(audio.currentTime);
+});
+
+audio.addEventListener('ended', () => {
+  if(!isRepeating) playNext(); else audio.currentTime=0;
+});
+
+miniSeekbar.addEventListener('input', ()=> {
+  if(!audio.duration) return;
+  const pct = Number(miniSeekbar.value);
+  audio.currentTime = (pct/100) * audio.duration;
+});
+fsSeekbar.addEventListener('input', ()=> {
+  if(!audio.duration) return;
+  const pct = Number(fsSeekbar.value);
+  audio.currentTime = (pct/100) * audio.duration;
+});
+
+/* --------------- UI wiring ---------------- */
+document.querySelectorAll('.menu-link').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.menu-link').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('main > div').forEach(d=>d.classList.add('hidden'));
+    const sec = btn.dataset.section;
+    document.getElementById('section-'+sec).classList.remove('hidden');
+    currentSection = sec;
+    if(sec === 'favorites') {
+      loadFavorites();
+    }
+  });
+});
+
+function resumePlay(){ audio.play().then(()=>{ isPlaying=true; syncPlayIcons() }).catch(()=>{ isPlaying=false; syncPlayIcons() }); }
+miniPlayBtn.addEventListener('click', (e)=>{ e.stopPropagation(); isPlaying ? pauseTrack() : resumePlay(); });
+miniPrevBtn.addEventListener('click', (e)=>{ e.stopPropagation(); playPrev(); });
+miniNextBtn.addEventListener('click', (e)=>{ e.stopPropagation(); playNext(); });
+miniFavBtn.addEventListener('click', (e)=>{ e.stopPropagation(); const cur = currentPlaylist[currentTrackIndex]; if(cur) toggleFavoriteForTrack(cur,currentSection); });
+
+fsPlay.addEventListener('click', ()=>{ isPlaying ? pauseTrack() : resumePlay(); });
+fsPrev.addEventListener('click', playPrev);
+fsNext.addEventListener('click', playNext);
+fsClose.addEventListener('click', ()=>{ 
+  fullscreen.classList.remove('show'); 
+  fullscreen.classList.add('hidden'); 
+  fullscreen.setAttribute('aria-hidden','true'); 
+  miniPlayer.classList.remove('hidden');
+  document.body.style.overflow = '';
+});
+
+document.getElementById('miniHeader').addEventListener('click', (e)=>{
+  fullscreen.classList.remove('hidden'); 
+  fullscreen.classList.add('show'); 
+  fullscreen.setAttribute('aria-hidden','false');
+  miniPlayer.classList.add('hidden');
+  document.body.style.overflow = 'hidden';
+});
+
+/* --------------- init --------------------- */
+document.addEventListener('DOMContentLoaded', () => {
+  loadAllTracks();
+  const searchInput = document.getElementById('searchInput');
+  if(searchInput){
+    let t = null;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        document.querySelectorAll('.menu-link').forEach(b=>b.classList.remove('active'));
+        const btn = document.querySelector('.menu-link[data-section="search"]');
+        if(btn) btn.classList.add('active');
+        document.querySelectorAll('main > div').forEach(d=>d.classList.add('hidden'));
+        document.getElementById('section-search').classList.remove('hidden');
+        searchMusic();
+      }, 220);
+    });
+  }
+});
+
+window._ms = { allTracks, loadAllTracks, renderAllTracks, renderFavorites, playFromSection };
+
+  </script>
+</body>
+</html>

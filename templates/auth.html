@@ -4,166 +4,120 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Авторизация</title>
-  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&display=swap" rel="stylesheet">
-  <script>
-
-    let bridge;
-    let isDragging = false;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    window.onload = () => {
-        new QWebChannel(qt.webChannelTransport, function(channel) {
-            bridge = channel.objects.bridge;
-
-            document.querySelector(".close").onclick = () => {
-                bridge.close_app();
-            };
-
-            document.querySelector(".minimize").onclick = () => {
-                bridge.minimize_app();
-            };
-
-            const windowBar = document.querySelector(".window-bar");
-
-            windowBar.addEventListener("mousedown", (e) => {
-                if (e.button !== 0) return;
-
-                isDragging = true;
-                        // Запоминаем смещение курсора относительно окна
-                offsetX = e.screenX - window.screenX;
-                offsetY = e.screenY - window.screenY;
-            });
-
-            window.addEventListener("mousemove", (e) => {
-                if (isDragging) {
-                        const newX = e.screenX - offsetX;
-                        const newY = e.screenY - offsetY;
-                        bridge.move_window(newX, newY);
-                    }
-                });
-
-                window.addEventListener("mouseup", () => {
-                    isDragging = false;
-                });
-        });
-    };
-
-  </script>
   <style>
-    :root{
-      --bg:#000; --card:#111; --surface:#fff; --muted:#bdbdbd;
-      --accent:#fff; --radius:16px; --shadow:0 8px 30px rgba(255,255,255,0.03);
+    :root {
+      --bg:#fff; --card:#fdfdfd; --surface:#111; --muted:#666;
+      --accent:#000; --radius:16px; --shadow:0 6px 24px rgba(0,0,0,0.08);
+      --shadow-hover:0 12px 32px rgba(0,0,0,0.18);
     }
-    *{box-sizing:border-box} html,body{height:100%}
-    body{
+    * { box-sizing:border-box; }
+    body {
       margin:0; font-family:Inter,ui-sans-serif,system-ui; background:var(--bg); color:var(--surface);
-      display:flex; align-items:center; justify-content:center; padding:32px;
+      display:flex; align-items:center; justify-content:center; min-height:100vh;
       overflow:hidden;
     }
 
-    /* 🌌 Фон canvas */
-    canvas#background {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      z-index: -1;
+    .wrap {
+      display:grid; grid-template-columns:420px 1fr; gap:40px; align-items:center;
+      width:min(960px,100%); opacity:0; transform:translateY(30px);
+      animation:fadeInUp 0.8s ease forwards;
+    }
+    @media(max-width:900px){.wrap{grid-template-columns:1fr; gap:20px}}
+
+    @keyframes fadeInUp {
+      to {opacity:1; transform:translateY(0);}
     }
 
-    .wrap{display:grid; grid-template-columns:420px 1fr; gap:32px; align-items:center; width:min(980px,100%)}
-    @media(max-width:900px){.wrap{grid-template-columns:1fr}}
-    .card{
-      background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
-      border:1px solid rgba(255,255,255,0.06); padding:28px; border-radius:var(--radius); box-shadow:var(--shadow);
-      backdrop-filter:blur(6px); position: relative; z-index: 1;
+    .card, .promo {
+      background:var(--card); border:1px solid #ddd; padding:32px;
+      border-radius:var(--radius); box-shadow:var(--shadow);
+      transition:transform 0.3s ease, box-shadow 0.3s ease;
     }
-    h1{margin:0 0 10px; font-size:22px} p.lead{margin:0 0 18px; color:var(--muted); font-size:14px}
-    form{display:flex; flex-direction:column; gap:14px}
-    .field{position:relative}
-    label{display:block; font-size:13px; margin-bottom:8px; color:var(--muted)}
-    input[type="text"],input[type="password"]{
-      width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.06);
-      background:transparent; color:var(--surface); font-size:15px;
+    .card:hover, .promo:hover {
+      transform:translateY(-6px);
+      box-shadow:var(--shadow-hover);
     }
-    input::placeholder{color:rgba(255,255,255,0.18)}
-    .underline{position:absolute;left:0;right:0;bottom:6px;height:2px}
-    .underline::after{content:'';position:absolute;left:0;top:0;height:100%;width:0;background:var(--accent);transition:width .35s}
-    input:focus + .underline::after{width:100%}
-    .toggle{position:absolute;right:12px;top:38px;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer}
-    button.cta{
-      margin-top:6px;padding:12px 16px;border-radius:12px;font-weight:600;font-size:15px;
-      background:linear-gradient(90deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
-      border:1px solid rgba(255,255,255,0.08);color:var(--surface);cursor:pointer
+
+    h1 {margin:0 0 10px; font-size:24px; font-weight:600;}
+    p.lead {margin:0 0 20px; color:var(--muted); font-size:15px;}
+    form {display:flex; flex-direction:column; gap:18px;}
+
+    .field {position:relative;}
+    label {display:block; font-size:13px; margin-bottom:8px; color:var(--muted);}
+    input[type="text"], input[type="password"] {
+      width:100%; padding:12px 14px; border-radius:10px;
+      border:1px solid #bbb; background:#fff; color:var(--surface);
+      font-size:15px; transition:all 0.25s ease;
     }
-    .promo{padding:28px;border-radius:var(--radius);background:rgba(255,255,255,0.02); z-index:1; position: relative;}
-    .logo{font-weight:700;font-size:18px}
-    .tag{color:var(--muted);font-size:14px}
-    .muted{color:var(--muted);font-size:13px}
-    .error{color:#f77;margin:10px 0;font-size:14px}
-    .window-bar {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 2;
-      display: flex; justify-content: space-between; align-items: center;
-      background-color: #1a1a2e; padding: 6px 10px;
-      font-weight: bold; font-size: 14px; color: white; user-select: none;
+    input:focus {
+      border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,0,0,0.12);
+      transform:scale(1.02);
     }
-    .window-controls button {
-      background: none; border: none; color: white; font-size: 16px; cursor: pointer; padding: 0 8px;
+    input::placeholder {color:#aaa;}
+
+    .toggle {
+      position:absolute; right:12px; top:36px; background:none; border:none;
+      color:var(--muted); font-size:13px; cursor:pointer; transition:0.2s;
     }
-    .window-controls button:hover { color: #ff4d4d; }
-    .window-controls .minimize:hover { color: #f0c020; }
-    
+    .toggle:hover {color:var(--accent);}
+
+    button.cta {
+      position:relative; overflow:hidden;
+      margin-top:6px; padding:14px 18px; border-radius:12px; font-weight:600; font-size:16px;
+      background:var(--accent); border:none; color:white; cursor:pointer;
+      transition:transform 0.2s, box-shadow 0.2s;
+    }
+    button.cta:hover { box-shadow:0 6px 14px rgba(0,0,0,0.3); }
+    button.cta:active { transform:scale(0.96); }
+
+    /* ripple эффект */
+    button.cta span {
+      position:absolute; border-radius:50%; transform:scale(0);
+      animation:ripple 0.6s linear; background:rgba(255,255,255,0.6);
+      width:120px; height:120px; pointer-events:none;
+    }
+    @keyframes ripple {
+      to {transform:scale(40); opacity:0;}
+    }
+
+    .promo {animation:fadeInUp 0.8s ease 0.6s both;}
+    .logo {font-weight:700; font-size:20px; margin-bottom:8px;}
+    .tag {color:var(--muted); font-size:14px; margin-top:6px;}
+    .error {color:#d33; margin:10px 0; font-size:14px;}
   </style>
 </head>
 <body>
-  <!-- 🌌 Фон -->
-  <canvas id="background"></canvas>
+  <main class="wrap">
+    <section class="card">
+      <h1>Войти в аккаунт</h1>
+      <p class="lead">Введите данные для входа в Streamify Network</p>
 
-  <div style="display: flex; flex-direction: column;">
-    <div class="window-bar">
-      <div class="window-title">
-        <a href="#" style="color: white; text-decoration: none; font-family: syne;">STEENY</a>
-      </div>
-      <div class="window-controls">
-        <button class="minimize">—</button>
-        <button class="close">×</button>
-      </div>
-    </div>
+      {% if error %}
+        <div class="error">{{ error }}</div>
+      {% endif %}
 
-    <main class="wrap">
-      <section class="card">
-        <h1>Войти в аккаунт</h1>
-        <p class="lead">Введите данные для входа в Streamify Network</p>
+      <form method="post" action="/" novalidate>
+        <div class="field">
+          <label for="email">Email или логин</label>
+          <input id="email" name="email" type="text" placeholder="you@domain.com" required />
+        </div>
 
-        {% if error %}
-          <div class="error">{{ error }}</div>
-        {% endif %}
+        <div class="field">
+          <label for="password">Пароль</label>
+          <input id="password" name="password" type="password" placeholder="••••••••" required />
+          <button type="button" class="toggle" id="togglePwd">Показать</button>
+        </div>
 
-        <form method="post" action="/" novalidate>
-          <div class="field">
-            <label for="email">Email или логин</label>
-            <input id="email" name="email" type="text" placeholder="you@domain.com" required />
-            <span class="underline"></span>
-          </div>
+        <button class="cta" type="submit">Войти</button>
+      </form>
+    </section>
 
-          <div class="field">
-            <label for="password">Пароль</label>
-            <input id="password" name="password" type="password" placeholder="••••••••" required />
-            <button type="button" class="toggle" id="togglePwd">Показать</button>
-            <span class="underline"></span>
-          </div>
-
-          <button class="cta" type="submit">Войти</button>
-        </form>
-      </section>
-
-      <aside class="promo">
-        <div class="logo">Streamify Network</div>
-        <div class="tag">Минимализм. Простота. Доступность.</div>
-        <div class="tag">Поддержка разных файлов, быстрота и качество.</div>
-      </aside>
-    </main>
-  </div>
+    <aside class="promo">
+      <div class="logo">Streamify Network</div>
+      <div class="tag">Мы хотим, чтобы музыка сопровождала вас всегда и везде. Поэтому мы даём вам возможность слушать её без ограничений, наслаждаться любимыми композициями в отличном качестве и открывать для себя новые мелодии, которые будут радовать каждый день.</div>
+    </aside>
+  </main>
 
   <script>
     // показать/скрыть пароль
@@ -175,77 +129,17 @@
       toggle.textContent=isPwd?'Скрыть':'Показать';
     });
 
-    // 🌌 Анимация фона: частицы + звезды
-    const canvas = document.getElementById("background");
-    const ctx = canvas.getContext("2d");
-    let particles = [];
-    let stars = [];
-
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
-
-    class Particle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 2 + 1;
-        this.speed = Math.random() * 1 + 0.5;
-      }
-      update() {
-        this.y += this.speed;
-        if (this.y > canvas.height) {
-          this.y = 0;
-          this.x = Math.random() * canvas.width;
-        }
-      }
-      draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255,0.8)";
-        ctx.fill();
-      }
-    }
-
-    class Star {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 1.5 + 0.5;
-        this.alpha = Math.random();
-        this.fade = Math.random() * 0.02 + 0.005;
-      }
-      update() {
-        this.alpha += this.fade;
-        if (this.alpha <= 0 || this.alpha >= 1) this.fade *= -1;
-      }
-      draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${this.alpha})`;
-        ctx.fill();
-      }
-    }
-
-    function initBackground() {
-      particles = [];
-      stars = [];
-      for (let i = 0; i < 100; i++) particles.push(new Particle());
-      for (let i = 0; i < 80; i++) stars.push(new Star());
-    }
-
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      stars.forEach(s => { s.update(); s.draw(); });
-      particles.forEach(p => { p.update(); p.draw(); });
-      requestAnimationFrame(animate);
-    }
-
-    initBackground();
-    animate();
+    // ripple-эффект
+    const btn=document.querySelector('.cta');
+    btn.addEventListener('click', function(e){
+      let x=e.clientX-this.getBoundingClientRect().left;
+      let y=e.clientY-this.getBoundingClientRect().top;
+      let ripple=document.createElement("span");
+      ripple.style.left=x+"px";
+      ripple.style.top=y+"px";
+      this.appendChild(ripple);
+      setTimeout(()=>{ripple.remove()},600);
+    });
   </script>
 </body>
 </html>

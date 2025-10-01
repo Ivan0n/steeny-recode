@@ -14,5 +14,3 @@ def stream_music(song_name, artist):
 
     return send_from_directory(MUSIC_DIR, filename, as_attachment=False)
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)

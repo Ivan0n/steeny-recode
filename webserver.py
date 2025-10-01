@@ -9,7 +9,7 @@ app.secret_key = "steeny_key_5252525byby235672153"
 def load_users():
     users = {}
     try:
-        with open("base/auth.csv", "r", encoding="utf-8-sig") as f:
+        with open("base/user/auth.csv", "r", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 email = (row.get("email") or "").strip()
@@ -99,7 +99,7 @@ def playlist_data():
 
     music_data = []
     try:
-        with open('music.csv', 'r', encoding='utf-8') as f:
+        with open('base/music/music.csv', 'r', encoding='utf-8') as f:
             rows = list(csv.DictReader(f))
             slice_data = rows[offset:offset+limit]
             for row in slice_data:
@@ -116,7 +116,7 @@ def playlist_data():
 
     favorites = set()
     try:
-        with open('favorites.csv', 'r', encoding='utf-8') as f:
+        with open('base/user/favorites.csv', 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if row['user'] == user:
@@ -144,11 +144,11 @@ def add_to_favorites():
         return jsonify({"error": "ID трека обязателен"}), 400
 
     try:
-        with open('favorites.csv', 'a', newline='', encoding='utf-8') as f:
+        with open('base/user/favorites.csv', 'a', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow([user, track_id])
     except FileNotFoundError:
-        with open('favorites.csv', 'w', newline='', encoding='utf-8') as f:
+        with open('base/user/favorites.csv', 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(['user', 'id'])
             writer.writerow([user, track_id])
@@ -170,13 +170,13 @@ def remove_from_favorites():
     
     try:
         rows = []
-        with open('favorites.csv', 'r', encoding='utf-8') as f:
+        with open('base/user/favorites.csv', 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if not (row['user'] == user and row['id'] == track_id):
                     rows.append(row)
         
-        with open('favorites.csv', 'w', newline='', encoding='utf-8') as f:
+        with open('base/user/favorites.csv', 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(['user', 'id'])
             for row in rows:
@@ -200,7 +200,7 @@ def search_music():
     
     results = []
     try:
-        with open('music.csv', 'r', encoding='utf-8') as f:
+        with open('base/music/music.csv', 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if (query in row['musicname'].lower() or 
@@ -218,5 +218,3 @@ def search_music():
     
     return jsonify(results)
 
-if __name__ == "__main__":
-    app.run(port=2020, host='0.0.0.0', debug=True)

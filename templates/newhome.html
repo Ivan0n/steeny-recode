@@ -4,222 +4,183 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MusicStream — Steeny</title>
+
+  <!-- ВАЖНО: config ставим до загрузки tailwind -->
+  <script>
+    tailwind = window.tailwind || {};
+    tailwind.config = { darkMode: 'class' };
+  </script>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+  const htmlEl = document.documentElement;
+  const indicator = document.querySelector('.theme-indicator');
+  const options = document.querySelectorAll('.theme-option');
+
+  function setTheme(theme) {
+    htmlEl.classList.remove('dark', 'purple', 'green');
+    if (theme === 'dark') htmlEl.classList.add('dark');
+    if (theme === 'purple') htmlEl.classList.add('purple');
+    if (theme === 'green') htmlEl.classList.add('green');
+    localStorage.setItem('theme', theme);
+
+    // передвигаем индикатор
+    const index = ['light', 'dark', 'purple', 'green'].indexOf(theme);
+    if (index >= 0) {
+      indicator.style.left = `calc(${index * 25}% + 4px)`;
+    }
+  }
+
+  // загрузка сохранённой
+  const stored = localStorage.getItem('theme') || 'light';
+  setTheme(stored);
+
+  // клики по вариантам
+  options.forEach(opt => {
+    opt.addEventListener('click', () => setTheme(opt.dataset.theme));
+  });
+});
+</script>
+
+
   <script src="https://cdn.tailwindcss.com"></script>
+
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+  <link rel="icon" type="image/png" href="https://i.pinimg.com/736x/5a/d6/ef/5ad6ef496c7a7c342b9b0fdf2bce426a.jpg">
 
   <style>
-    body { font-family: 'Inter', sans-serif; overflow: hidden;}
-    .menu-link { @apply flex items-center gap-3 px-4 py-2 rounded-lg transition cursor-pointer font-medium; background: #f3f4f6; }
-    .menu-link:hover { background: #e5e7eb; transform: translateY(-1px); }
-    .menu-link.active { background: #111827; color: #ffffff; }
-    footer.player { background: #ffffff; color: #111827; border-top: 1px solid #e5e7eb; }
-    .seekbar { -webkit-appearance: none; width: 100%; height: 6px; background: linear-gradient(90deg,#111827 0%, #d1d5db 0%); border-radius: 4px; outline: none; cursor: pointer; }
-    .seekbar::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #111827; box-shadow: 0 0 0 4px rgba(17,24,39,0.06); cursor: pointer; }
-    .volume-slider { -webkit-appearance: none; width: 160px; height: 6px; background: linear-gradient(90deg,#111827 100%, #e6e6e6 100%); border-radius: 4px; outline: none; cursor: pointer; }
-    .volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #111827; box-shadow: 0 0 0 3px rgba(17,24,39,0.06); cursor: pointer; }
-    .player-btn { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: #f3f4f6; border: 1px solid #e6e6e6; transition: background .15s, transform .08s; cursor: pointer; }
-    .player-btn:hover { background: #e5e7eb; transform: translateY(-2px); }
-    .player-btn.play { width: 56px; height: 56px; }
-    .player-btn i { font-size: 18px; color: #111827; }
-    .controls-center { min-width: 320px; display:flex; gap:18px; align-items:center; justify-content:center; }
-    .track-item { transition: background .12s, transform .08s; }
-    .track-item:hover { background: #f8fafc; transform: translateY(-1px); }
-    .left-meta { min-width: 260px; max-width: 320px; display:flex; gap:12px; align-items:center; }
-    .right-volume { min-width: 220px; display:flex; gap:12px; align-items:center; justify-content:flex-end; }
-    @media (max-width:900px){ .controls-center { min-width: 0; gap:10px; } .volume-slider { width: 110px; } .left-meta { min-width: 160px; } footer.player { padding-left: 12px; padding-right: 12px; } }
+    /* Небольшие CSS-правки для анимации переключателя и слайдеров */
+    body { font-family: 'Inter', sans-serif; }
+    /* Плавная смена цветов по всей странице */
+    .theme-transition { transition: color .25s ease, background-color .25s ease; }
 
-    .search_iframe { width: 100%; height: 80vh; border: none; border-radius: 12px; }
-    .track-list {
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
-        max-height: 400px;
-        overflow-y: auto;
-        border-radius: 8px;
-        background: #f8fafc;
-    }
+    /* Движение кружка переключателя (будем переключать класс .translate-on) */
+    .theme-dot { transition: transform .25s ease; display:block; }
+    .translate-on { transform: translateX(1.25rem); } /* съезжает вправо */
 
-    .track-row {
-        display: flex;
-        align-items: center;
-        padding: 8px 12px;
-        background: white;
-        border-radius: 6px;
-        transition: all 0.2s ease;
-        min-width: 0;
-    }
-
-    .track-row:hover {
-        background: #f1f5f9;
-        transform: translateX(2px);
-    }
-
-    .track-row.active {
-        background: #eff6ff;
-        border-left: 3px solid #000000;
-    }
-
-    .track-info {
-        flex: 1;
-        min-width: 0;
-        margin-right: 12px;
-    }
-
-    .track-title {
-        font-weight: 600;
-        font-size: 14px;
-        color: #111827;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .track-artist {
-        font-size: 12px;
-        color: #6b7280;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .track-actions {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-shrink: 0;
-    }
-
-    .track-number {
-        width: 20px;
-        font-size: 12px;
-        color: #9ca3af;
-        text-align: center;
-        flex-shrink: 0;
-    }
-
-    .track-duration {
-        font-size: 12px;
-        color: #9ca3af;
-        width: 40px;
-        text-align: right;
-        flex-shrink: 0;
-    }
-
-    /* Стили для скроллбара */
-    .track-list::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .track-list::-webkit-scrollbar-track {
-        background: #f1f5f9;
-        border-radius: 3px;
-    }
-
-    .track-list::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 3px;
-    }
-
-    .track-list::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-    }
+    /* Стили для слайдер-тумблера в dark */
+    .seekbar::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#111827; }
+    html.dark .seekbar::-webkit-slider-thumb { background:#f9fafb; }
+    .volume-slider::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; border-radius:50%; background:#111827; }
+    html.dark .volume-slider::-webkit-slider-thumb { background:#f9fafb; }
   </style>
 </head>
-<body class="bg-white text-black flex flex-col min-h-screen text-[15px]">
+
+<body class="bg-white text-black dark:bg-gray-900 dark:text-white flex flex-col min-h-screen text-[15px] theme-transition">
   <div class="flex flex-1">
     <!-- Левое меню -->
-    <aside class="w-60 bg-white text-black border-r border-gray-200 flex flex-col justify-between">
+    <aside class="w-60 border-r flex flex-col justify-between transition-colors duration-200" id="sidebar" class="inverse-text">
       <div>
-        <div class="flex items-center gap-3 p-5 border-b border-gray-200">
-          <div class="w-10 h-10 bg-black text-white rounded flex items-center justify-center font-bold text-lg">
-            <img src="https://i.pinimg.com/736x/5a/d6/ef/5ad6ef496c7a7c342b9b0fdf2bce426a.jpg" alt="" style="border-radius: 8px; width:100%; height:100%; object-fit:cover;">
+        <div class="flex items-center gap-3 p-5 border-b border-gray-200 dark:border-gray-700">
+          <div class="w-10 h-10 rounded flex items-center justify-center font-bold text-lg overflow-hidden">
+            <img src="https://i.pinimg.com/736x/5a/d6/ef/5ad6ef496c7a7c342b9b0fdf2bce426a.jpg" alt="" class="w-full h-full object-cover">
           </div>
           <span class="font-bold text-lg">Steeny</span>
         </div>
         <nav id="menu" class="mt-6 flex flex-col gap-3 px-3 text-base">
-          <div class="menu-link active" data-section="home"><i class="fa-solid fa-house"></i> Главная</div>
-          <div class="menu-link" data-section="search"><i class="fa-solid fa-magnifying-glass"></i> Поиск</div>
-          <div class="menu-link" data-section="favorites"><i class="fa-solid fa-heart"></i> Любимое</div>
+          <div class="menu-link active" data-section="home" style="padding:7px; border-radius:5px;"><i class="fa-solid fa-house"></i> Главная</div>
+          <div class="menu-link" data-section="search" style="padding:7px; border-radius:5px;"><i class="fa-solid fa-magnifying-glass"></i> Поиск</div>
+          <div class="menu-link" data-section="favorites" style="padding:7px; border-radius:5px;"><i class="fa-solid fa-heart"></i> Любимое</div>
+          <div class="menu-link" data-section="settings" style="padding:7px; border-radius:5px;"><i class="fa-solid fa-gear"></i> Настройки</div>
         </nav>
-      </div>
-      <div class="px-3 py-6 border-t border-gray-200 flex flex-col gap-2 text-base font-medium">
-        <div class="menu-link"><i class="fa-solid fa-gear"></i> Настройки</div>
-        <div class="menu-link"><i class="fa-solid fa-right-from-bracket"></i> <a href="/logout">Выйти</a></div>
       </div>
     </aside>
 
     <!-- Центральный контент -->
-    <main class="flex-1 flex flex-col">
-      <header class="flex justify-end items-center p-5 border-b border-gray-200">
-        <span class="mr-4 font-semibold">{{ name }}</span>
+    <main class="flex-1 flex flex-col transition-colors duration-200" class="inverse-text" style="padding-left: 220px;">
+      <header class="flex justify-end items-center p-5 border-b border-gray-200 dark:border-gray-700 theme-transition" class="inverse-text">
+        <span class="nameuser" >{{ name }}</span>
         <img src="{{ avatar }}" class="w-10 h-10 rounded-full" alt="avatar">
       </header>
 
-      <div id="content" class="flex-1 overflow-y-auto p-8">
+      <div id="content" class="flex-1 overflow-y-auto p-8 theme-transition">
         <!-- Главная -->
-<!-- Главная -->
-<!-- Главная -->
-      <div id="section-home">
+        <div id="section-home">
           <h2 class="text-2xl font-bold mb-4">🎵 Вся музыка</h2>
-          <div class="bg-white rounded-lg border border-gray-200 p-4">
-              <div class="flex items-center justify-between mb-4" >
-                  <h3 class="font-semibold text-gray-700" >Все треки ({{total_tracks}})</h3>
-                  <div class="flex items-center gap-2">
-                      <input type="text" placeholder="Фильтр..." 
-                            class="px-3 py-1 border border-gray-300 rounded text-sm" 
-                            oninput="filterTracks(this.value)">
-                      <button class="p-1 text-gray-500 hover:text-gray-700">
-                          <i class="fa-solid fa-arrow-down-wide-short" ></i>
-                      </button>
-                  </div>
+          <div class="theme-card">
+            <div class="flex items-center justify-between mb-4">
+              
+              <div class="flex items-center gap-2">
+                <input type="text" placeholder="Фильтр..."
+                       class="px-3 py-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded text-sm theme-transition"
+                       oninput="filterTracks(this.value)">
+                <button class="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white">
+                  <i class="fa-solid fa-arrow-down-wide-short"></i>
+                  
+                </button>
               </div>
-              <div class="track-list" id="allTracksList" style="height: 350px; overflow-x: hidden;">
-                  <!-- Треки будут загружаться здесь -->
-              </div>
+              <i class="fa-solid "></i> <a href="https://dalink.to/ivan0n"><b>Поддержать донатом</b></a><br>
+            </div>
+            
+            <div class="track-list" id="allTracksList" style=" overflow-x: hidden;">
+              <!-- Треки будут загружаться здесь -->
+            </div>
           </div>
-      </div>
+        </div>
 
         <!-- Поиск -->
-<!-- Поиск -->
-          <!-- Поиск -->
-          <div id="section-search" class="hidden">
-              <h2 class="text-2xl font-bold mb-4">🔍 Поиск</h2>
-              <div class="flex gap-2 mb-4">
-                  <input id="searchInput" type="text" placeholder="Искать трек или артиста..." 
-                        class="flex-1 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black">
-                  <button onclick="searchMusic()" 
-                          class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800">Искать</button>
-              </div>
-              <div class="bg-white rounded-lg border border-gray-200 p-4">
-                  <div id="searchResults" class="track-list" style="height: 320px; overflow-x: hidden;">
-                      <!-- Результаты поиска будут здесь -->
-                       
-                  </div>
-              </div>
+        <div id="section-search" class="hidden">
+          <h2 class="text-2xl font-bold mb-4">🔍 Поиск</h2>
+          <div class="flex gap-2 mb-4">
+            <input id="searchInput" type="text" placeholder="Искать трек или артиста..."
+                   class="flex-1 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white theme-transition">
+            <button onclick="searchMusic()"
+                    class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 theme-transition">Искать</button>
           </div>
-
+          <div class="theme-card">
+            <div id="searchResults" class="track-list" style="overflow-x: hidden;">
+              <!-- Результаты поиска будут здесь -->
+            </div>
+          </div>
+        </div>
 
         <!-- Любимое -->
         <div id="section-favorites" class="hidden">
-            <h2 class="text-2xl font-bold mb-4">❤️ Любимые треки</h2>
-            <div class="bg-white rounded-lg border border-gray-200 p-4">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-semibold text-gray-700">Избранное ({{favorite_count}})</h3>
-                </div>
-                <div class="track-list" id="favoritesList" style="height: 350px; overflow-x: hidden;">
-                    <!-- Избранные треки будут здесь -->
-                </div>
+          <h2 class="text-2xl font-bold mb-4">❤️ Любимые треки</h2>
+          <div class="theme-card">
+            <div class="flex items-center justify-between mb-4">
             </div>
+              <div class="track-list" id="favoritesList" style="overflow-x: hidden;">
+            </div>
+          </div>
         </div>
+
+        <!-- Настройки -->
+        <div id="section-settings" class="hidden">
+          <h2 class="text-2xl font-bold mb-4">⚙️ Настройки</h2>
+          <div class="theme-card">
+            <div>
+              <h2>Имя аккаунта: <b>{{ name }}</b></h2>
+              <h2>username: <b><i>{{ user }}</i></b></h2>
+              <i class="fa-solid "></i> <a href="http://91.205.220.128:2021/"><b>Загрузить свой трек</b></a><br>
+              <i class="fa-solid fa-right-from-bracket"></i> <a href="/logout">Выйти</a>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 mt-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="themeToggle" class="hidden">
+
+              <div class="theme-toggle">
+                <div class="theme-indicator"></div>
+                <div class="theme-option" data-theme="light">Light</div>
+                <div class="theme-option" data-theme="dark">Dark</div>
+                <div class="theme-option" data-theme="purple">Purple</div>
+                <div class="theme-option" data-theme="green">Green</div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 
   <!-- ---- Плеер ---- -->
-  <footer class="player border-t p-4">
+  <footer class="player border-t p-4 fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 dark:text-white border-gray-200 dark:border-gray-700 theme-transition">
     <div class="mb-4">
       <input type="range" id="seekbar" class="seekbar mb-1" value="0" max="100">
-      <div class="flex justify-between w-full text-xs text-gray-500">
+      <div class="flex justify-between w-full text-xs text-gray-500 dark:text-gray-400">
         <span id="currentTime">0:00</span>
         <span id="duration">0:00</span>
       </div>
@@ -230,7 +191,7 @@
         <img id="coverImg" src="https://via.placeholder.com/64" class="w-14 h-14 rounded" alt="cover">
         <div>
           <div id="trackTitle" class="font-semibold text-sm">Название трека</div>
-          <div id="trackArtist" class="text-xs text-gray-500">Артист</div>
+          <div id="trackArtist" class="text-xs text-gray-500 dark:text-gray-400">Артист</div>
         </div>
         <button id="favBtn" class="ml-3 text-2xl text-gray-400 hover:text-yellow-500"><i class="fa-solid fa-star"></i></button>
       </div>
@@ -251,458 +212,9 @@
     <audio id="audioPlayer"></audio>
   </footer>
 
-<script>
-    const audio = document.getElementById('audioPlayer');
-    const playBtn = document.getElementById('playBtn');
-    const playIcon = document.getElementById('playIcon');
-    const nextBtn = document.getElementById('nextBtn');
-    const prevBtn = document.getElementById('prevBtn');
-    const seekbar = document.getElementById('seekbar');
-    const currentTimeElem = document.getElementById('currentTime');
-    const durationElem = document.getElementById('duration');
-    const repeatBtn = document.getElementById('repeatBtn');
-    const repeatIcon = document.getElementById('repeatIcon');
-    const volumeSlider = document.getElementById('volumeSlider');
-    const volumeIcon = document.getElementById('volumeIcon');
-    const titleElem = document.getElementById('trackTitle');
-    const artistElem = document.getElementById('trackArtist');
-    const coverImg = document.getElementById('coverImg');
-    const favoritesList = document.getElementById('favoritesList');
-    const favBtn = document.getElementById('favBtn');
+  <script src="{{ url_for('static', filename='music_player_js/homepage.js') }}"></script>
 
-    let allTracks = []; // Все треки из базы
-    let currentPlaylist = []; // Текущий плейлист для воспроизведения
-    let isPlaying = false, isRepeating = false, currentTrackIndex = 0;
-    let currentSection = 'home'; // Текущий активный раздел
 
-    // Загрузка всех треков
-    async function loadAllTracks() {
-        const res = await fetch("/playlist/data");
-        const data = await res.json();
-        if (!data.error) {
-            allTracks = data;
-            currentPlaylist = [...allTracks]; // По умолчанию используем все треки
-            renderAllTracks();
-            renderFavorites();
-            if (currentPlaylist.length > 0) {
-                loadTrack(currentTrackIndex);
-            }
-        }
-    }
 
-    // Рендеринг всех треков
-    function renderAllTracks() {
-        const container = document.getElementById('allTracksList');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        allTracks.forEach((track, index) => {
-            const row = document.createElement('div');
-            row.className = 'track-row';
-            if (currentSection === 'home' && index === currentTrackIndex && currentPlaylist === allTracks) {
-                row.classList.add('active');
-            }
-            row.innerHTML = `
-                <div class="track-number">${index + 1}</div>
-                <div class="track-info">
-                    <div class="track-title">${track.title}</div>
-                    <div class="track-artist">${track.artist}</div>
-                </div>
-                <div class="track-duration">2:45</div>
-                <div class="track-actions">
-                    <button class="text-gray-400 hover:text-yellow-500">
-                        <i class="fa-solid ${track.favorite ? 'fa-star text-yellow-500' : 'fa-star'}"></i>
-                    </button>
-                    <button class="text-gray-400 hover:text-blue-500">
-                        <i class="fa-solid fa-play"></i>
-                    </button>
-                </div>
-            `;
-            
-            row.querySelector('button:first-child').onclick = (e) => {
-                e.stopPropagation();
-                toggleFavoriteForTrack(track, index);
-            };
-            
-            row.querySelector('button:last-child').onclick = (e) => {
-                e.stopPropagation();
-                playFromSection('home', index);
-            };
-            
-            row.onclick = () => {
-                playFromSection('home', index);
-            };
-            
-            container.appendChild(row);
-        });
-    }
-
-    // Рендеринг избранных треков
-    function renderFavorites() {
-        const container = document.getElementById('favoritesList');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        const favoriteTracks = allTracks.filter(track => track.favorite);
-        let favoriteCount = 0;
-        
-        favoriteTracks.forEach((track, index) => {
-            favoriteCount++;
-            
-            const row = document.createElement('div');
-            row.className = 'track-row';
-            if (currentSection === 'favorites' && index === currentTrackIndex && currentPlaylist === favoriteTracks) {
-                row.classList.add('active');
-            }
-            row.innerHTML = `
-                <div class="track-number">${favoriteCount}</div>
-                <div class="track-info">
-                    <div class="track-title">${track.title}</div>
-                    <div class="track-artist">${track.artist}</div>
-                </div>
-                <div class="track-duration">2:45</div>
-                <div class="track-actions">
-                    <button class="text-yellow-500 hover:text-gray-400">
-                        <i class="fa-solid fa-star"></i>
-                    </button>
-                    <button class="text-gray-400 hover:text-blue-500">
-                        <i class="fa-solid fa-play"></i>
-                    </button>
-                </div>
-            `;
-            
-            row.querySelector('button:first-child').onclick = (e) => {
-                e.stopPropagation();
-                const originalIndex = allTracks.findIndex(t => t.id === track.id);
-                toggleFavoriteForTrack(track, originalIndex);
-            };
-            
-            row.querySelector('button:last-child').onclick = (e) => {
-                e.stopPropagation();
-                playFromSection('favorites', index);
-            };
-            
-            row.onclick = () => {
-                playFromSection('favorites', index);
-            };
-            
-            container.appendChild(row);
-        });
-        
-        // Обновляем счетчик избранного
-        const favoriteHeader = document.querySelector('#section-favorites h3');
-        if (favoriteHeader) {
-            favoriteHeader.textContent = `Избранное (${favoriteCount})`;
-        }
-    }
-
-    // Воспроизведение из определенного раздела
-    function playFromSection(section, index) {
-        currentSection = section;
-        
-        switch(section) {
-            case 'home':
-                currentPlaylist = [...allTracks];
-                break;
-            case 'favorites':
-                currentPlaylist = allTracks.filter(track => track.favorite);
-                break;
-            case 'search':
-                // Для поиска currentPlaylist уже установлен в searchMusic
-                break;
-        }
-        
-        currentTrackIndex = index;
-        loadTrack(currentTrackIndex);
-        playTrack();
-        updateActiveRows();
-    }
-
-    // Загрузка трека
-    function loadTrack(index) {
-        const track = currentPlaylist[index];
-        if (!track) return;
-        
-        titleElem.textContent = track.title;
-        artistElem.textContent = track.artist;
-        coverImg.src = track.cover;
-        audio.src = track.src;
-        updateFavBtn(track.favorite);
-        isPlaying = false;
-        updatePlayIcon(false);
-        seekbar.value = 0;
-        currentTimeElem.textContent = '0:00';
-        durationElem.textContent = '0:00';
-        
-        updateActiveRows();
-    }
-
-    // Обновление активных строк
-    function updateActiveRows() {
-        document.querySelectorAll('.track-row').forEach(row => {
-            row.classList.remove('active');
-        });
-        
-        // Находим и активируем текущий трек в текущем разделе
-        const currentTrack = currentPlaylist[currentTrackIndex];
-        if (!currentTrack) return;
-        
-        switch(currentSection) {
-            case 'home':
-                const homeIndex = allTracks.findIndex(t => t.id === currentTrack.id);
-                if (homeIndex !== -1) {
-                    const homeRow = document.querySelectorAll('#allTracksList .track-row')[homeIndex];
-                    if (homeRow) homeRow.classList.add('active');
-                }
-                break;
-                
-            case 'favorites':
-                const favoriteTracks = allTracks.filter(t => t.favorite);
-                const favIndex = favoriteTracks.findIndex(t => t.id === currentTrack.id);
-                if (favIndex !== -1) {
-                    const favRow = document.querySelectorAll('#favoritesList .track-row')[favIndex];
-                    if (favRow) favRow.classList.add('active');
-                }
-                break;
-                
-            case 'search':
-                // Для поиска активация обрабатывается в searchMusic
-                break;
-        }
-    }
-
-    // Переключение избранного для конкретного трека
-    async function toggleFavoriteForTrack(track, index) {
-        if (track.favorite) {
-            await fetch("/playlist/remove", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({id: track.id})
-            });
-            track.favorite = false;
-        } else {
-            await fetch("/playlist/add", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({id: track.id})
-            });
-            track.favorite = true;
-        }
-        
-        // Обновляем UI
-        updateFavBtn(track.favorite);
-        renderFavorites();
-        renderAllTracks();
-        
-        // Если текущий трек - это измененный трек, обновляем кнопку
-        if (currentPlaylist[currentTrackIndex] && currentPlaylist[currentTrackIndex].id === track.id) {
-            updateFavBtn(track.favorite);
-        }
-    }
-
-    // Переключение избранного для текущего трека
-    async function toggleFavorite() {
-        const track = currentPlaylist[currentTrackIndex];
-        if (!track) return;
-        
-        await toggleFavoriteForTrack(track, currentTrackIndex);
-    }
-
-    // Поиск музыки
-    async function searchMusic() {
-        const q = document.getElementById("searchInput").value;
-        const res = await fetch("/search?query=" + encodeURIComponent(q));
-        const searchResultsData = await res.json();
-
-        const searchResults = document.getElementById("searchResults");
-        searchResults.innerHTML = "";
-
-        if (searchResultsData.length === 0) {
-            searchResults.innerHTML = "<p class='p-4 text-gray-500 text-center'>Ничего не найдено...</p>";
-            return;
-        }
-
-        // Сохраняем результаты поиска как текущий плейлист
-        currentPlaylist = searchResultsData.map(track => {
-            // Проверяем, есть ли трек уже в избранном
-            const existingTrack = allTracks.find(t => t.id === track.id);
-            return {
-                ...track,
-                favorite: existingTrack ? existingTrack.favorite : false
-            };
-        });
-
-        searchResultsData.forEach((track, index) => {
-            const row = document.createElement('div');
-            row.className = 'track-row';
-            row.innerHTML = `
-                <div class="track-number">${index + 1}</div>
-                <div class="track-info">
-                    <div class="track-title">${track.title}</div>
-                    <div class="track-artist">${track.artist}</div>
-                </div>
-                <div class="track-duration">2:45</div>
-                <div class="track-actions">
-                    <button class="text-gray-400 hover:text-yellow-500">
-                        <i class="fa-solid ${track.favorite ? 'fa-star text-yellow-500' : 'fa-star'}"></i>
-                    </button>
-                    <button class="text-gray-400 hover:text-blue-500">
-                        <i class="fa-solid fa-play"></i>
-                    </button>
-                </div>
-            `;
-
-            row.querySelector('button:first-child').onclick = (e) => {
-                e.stopPropagation();
-                toggleFavoriteForTrack(track, index);
-            };
-
-            row.querySelector('button:last-child').onclick = (e) => {
-                e.stopPropagation();
-                currentSection = 'search';
-                currentTrackIndex = index;
-                loadTrack(currentTrackIndex);
-                playTrack();
-            };
-
-            row.onclick = () => {
-                currentSection = 'search';
-                currentTrackIndex = index;
-                loadTrack(currentTrackIndex);
-                playTrack();
-            };
-
-            searchResults.appendChild(row);
-        });
-    }
-
-    // Переход к следующему треку с учетом текущего раздела
-    function playNextTrack() {
-        if (currentPlaylist.length === 0) return;
-        
-        currentTrackIndex = (currentTrackIndex + 1) % currentPlaylist.length;
-        
-        // Если достигли конца плейлиста в избранном, переключаемся на главный
-        if (currentSection === 'favorites' && currentTrackIndex === 0 && currentPlaylist.length > 0) {
-            // Можно добавить логику для перехода к главному плейлисту
-            // currentSection = 'home';
-            // currentPlaylist = [...allTracks];
-            // currentTrackIndex = 0;
-        }
-        
-        loadTrack(currentTrackIndex);
-        playTrack();
-    }
-
-    // Остальные функции управления плеером (без изменений)
-    function updateFavBtn(fav) {
-        favBtn.style.color = fav ? "gold" : "gray";
-    }
-
-    function playTrack() {
-        audio.play().then(() => {
-            isPlaying = true;
-            updatePlayIcon(true);
-        }).catch(() => {
-            isPlaying = false;
-            updatePlayIcon(false);
-        });
-    }
-
-    function pauseTrack() {
-        audio.pause();
-        isPlaying = false;
-        updatePlayIcon(false);
-    }
-
-    function updatePlayIcon(playing) {
-        playIcon.classList.toggle('fa-play', !playing);
-        playIcon.classList.toggle('fa-pause', playing);
-    }
-
-    function formatTime(sec) {
-        if (!isFinite(sec)) return '0:00';
-        const m = Math.floor(sec / 60);
-        const s = Math.floor(sec % 60);
-        return m + ":" + (s < 10 ? "0" : "") + s;
-    }
-
-    // Инициализация
-    document.addEventListener('DOMContentLoaded', function() {
-        // Обработчики событий
-        favBtn.onclick = toggleFavorite;
-        playBtn.onclick = () => { isPlaying ? pauseTrack() : playTrack(); };
-        prevBtn.onclick = () => { 
-            currentTrackIndex = (currentTrackIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
-            loadTrack(currentTrackIndex);
-            playTrack();
-        };
-        nextBtn.onclick = () => { 
-            playNextTrack();
-        };
-        repeatBtn.onclick = () => { 
-            isRepeating = !isRepeating;
-            audio.loop = isRepeating;
-            repeatIcon.style.color = isRepeating ? '#111827' : '#6b7280';
-        };
-        
-        seekbar.addEventListener('input', () => {
-            if (audio.duration) audio.currentTime = (seekbar.value / 100) * audio.duration;
-        });
-        
-        audio.addEventListener('loadedmetadata', () => {
-            durationElem.textContent = formatTime(audio.duration);
-        });
-        
-        audio.onended = () => {
-            if (!isRepeating) {
-                playNextTrack();
-            }
-        };
-        
-        volumeSlider.oninput = () => {
-            audio.volume = volumeSlider.value;
-            updateVolumeUI(audio.volume);
-        };
-        
-        // Навигация по меню
-        document.querySelectorAll(".menu-link").forEach(l => l.onclick = () => {
-            document.querySelectorAll(".menu-link").forEach(x => x.classList.remove("active"));
-            l.classList.add("active");
-            document.querySelectorAll("#content > div").forEach(d => d.classList.add("hidden"));
-            document.getElementById(`section-${l.dataset.section}`).classList.remove("hidden");
-            currentSection = l.dataset.section;
-        });
-        
-        // Обновление UI громкости
-        function updateVolumeUI(v) {
-            const p = v * 100;
-            volumeSlider.style.background = `linear-gradient(90deg,#111827 ${p}%, #e6e6e6 ${p}%)`;
-            if (v === 0) volumeIcon.className = "fa-solid fa-volume-xmark";
-            else if (v < 0.5) volumeIcon.className = "fa-solid fa-volume-low";
-            else volumeIcon.className = "fa-solid fa-volume-high";
-        }
-        
-        audio.volume = volumeSlider.value;
-        updateVolumeUI(audio.volume);
-        
-        // Запуск прогресса и загрузка треков
-        requestAnimationFrame(updateProgress);
-        loadAllTracks();
-    });
-
-    function updateProgress() {
-        if (audio.duration) {
-            const p = (audio.currentTime / audio.duration) * 100;
-            seekbar.value = p;
-            seekbar.style.background = `linear-gradient(90deg,#111827 ${p}%, #e6e6e6 ${p}%)`;
-            currentTimeElem.textContent = formatTime(audio.currentTime);
-        }
-        requestAnimationFrame(updateProgress);
-    }
-</script>
-  
 </body>
 </html>

@@ -1,7 +1,8 @@
 from flask import Flask, send_from_directory, abort
 import os
-
 app = Flask(__name__)
+
+
 MUSIC_DIR = os.path.join(os.path.dirname(__file__), 'music')
 
 @app.route('/music/<artist>/<song_name>')

@@ -5,216 +5,333 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MusicStream — Steeny</title>
 
-  <!-- ВАЖНО: config ставим до загрузки tailwind -->
   <script>
     tailwind = window.tailwind || {};
     tailwind.config = { darkMode: 'class' };
   </script>
 
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-  const htmlEl = document.documentElement;
-  const indicator = document.querySelector('.theme-indicator');
-  const options = document.querySelectorAll('.theme-option');
-
-  function setTheme(theme) {
-    htmlEl.classList.remove('dark', 'purple', 'green');
-    if (theme === 'dark') htmlEl.classList.add('dark');
-    if (theme === 'purple') htmlEl.classList.add('purple');
-    if (theme === 'green') htmlEl.classList.add('green');
-    localStorage.setItem('theme', theme);
-
-    // передвигаем индикатор
-    const index = ['light', 'dark', 'purple', 'green'].indexOf(theme);
-    if (index >= 0) {
-      indicator.style.left = `calc(${index * 25}% + 4px)`;
-    }
-  }
-
-  // загрузка сохранённой
-  const stored = localStorage.getItem('theme') || 'light';
-  setTheme(stored);
-
-  // клики по вариантам
-  options.forEach(opt => {
-    opt.addEventListener('click', () => setTheme(opt.dataset.theme));
-  });
-});
-</script>
-
-
   <script src="https://cdn.tailwindcss.com"></script>
-
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
   <link rel="icon" type="image/png" href="https://i.pinimg.com/736x/5a/d6/ef/5ad6ef496c7a7c342b9b0fdf2bce426a.jpg">
 
-  <style>
-    /* Небольшие CSS-правки для анимации переключателя и слайдеров */
-    body { font-family: 'Inter', sans-serif; }
-    /* Плавная смена цветов по всей странице */
-    .theme-transition { transition: color .25s ease, background-color .25s ease; }
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const htmlEl = document.documentElement;
+    const themeCircles = document.querySelectorAll('.theme-circle');
+    const themes = ['light', 'dark', 'purple', 'green', 'blue', 'red'];
 
-    /* Движение кружка переключателя (будем переключать класс .translate-on) */
-    .theme-dot { transition: transform .25s ease; display:block; }
-    .translate-on { transform: translateX(1.25rem); } /* съезжает вправо */
+    function setTheme(theme) {
+      // Удаляем все классы тем
+      themes.forEach(t => htmlEl.classList.remove(t));
+      
+      // Добавляем нужный класс (кроме light, он по умолчанию)
+      if (theme !== 'light') {
+        htmlEl.classList.add(theme);
+      }
+      
+      localStorage.setItem('theme', theme);
 
-    /* Стили для слайдер-тумблера в dark */
-    .seekbar::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#111827; }
-    html.dark .seekbar::-webkit-slider-thumb { background:#f9fafb; }
-    .volume-slider::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; border-radius:50%; background:#111827; }
-    html.dark .volume-slider::-webkit-slider-thumb { background:#f9fafb; }
-  </style>
+      // Обновляем активный кружок
+      themeCircles.forEach(circle => {
+        if (circle.dataset.theme === theme) {
+          circle.classList.add('active');
+        } else {
+          circle.classList.remove('active');
+        }
+      });
+    }
+
+    // Загрузка сохранённой темы
+    const stored = localStorage.getItem('theme') || 'light';
+    setTheme(stored);
+
+    // Клики по кружкам
+    themeCircles.forEach(circle => {
+      circle.addEventListener('click', () => setTheme(circle.dataset.theme));
+    });
+  });
+  </script>
 </head>
 
 <body class="bg-white text-black dark:bg-gray-900 dark:text-white flex flex-col min-h-screen text-[15px] theme-transition">
   <div class="flex flex-1">
-    <!-- Левое меню -->
-    <aside class="w-60 border-r flex flex-col justify-between transition-colors duration-200" id="sidebar" class="inverse-text">
-      <div>
-        <div class="flex items-center gap-3 p-5 border-b border-gray-200 dark:border-gray-700">
-          <div class="w-10 h-10 rounded flex items-center justify-center font-bold text-lg overflow-hidden">
-            <img src="https://i.pinimg.com/736x/5a/d6/ef/5ad6ef496c7a7c342b9b0fdf2bce426a.jpg" alt="" class="w-full h-full object-cover">
-          </div>
-          <span class="font-bold text-lg">Steeny</span>
-        </div>
-        <nav id="menu" class="mt-6 flex flex-col gap-3 px-3 text-base">
-          <div class="menu-link active" data-section="home" style="padding:7px; border-radius:5px;"><i class="fa-solid fa-house"></i> Главная</div>
-          <div class="menu-link" data-section="search" style="padding:7px; border-radius:5px;"><i class="fa-solid fa-magnifying-glass"></i> Поиск</div>
-          <div class="menu-link" data-section="favorites" style="padding:7px; border-radius:5px;"><i class="fa-solid fa-heart"></i> Любимое</div>
-          <div class="menu-link" data-section="settings" style="padding:7px; border-radius:5px;"><i class="fa-solid fa-gear"></i> Настройки</div>
-        </nav>
-      </div>
+    <aside class="w-60 border-r flex flex-col justify-between theme-transition" id="sidebar">
+       <div>
+         <div class="flex items-center gap-3 p-5 border-b border-gray-200 dark:border-gray-700 theme-transition">
+           <div class="w-10 h-10 rounded flex items-center justify-center font-bold text-lg overflow-hidden">
+             <img src="https://i.pinimg.com/736x/5a/d6/ef/5ad6ef496c7a7c342b9b0fdf2bce426a.jpg" alt="" class="w-full h-full object-cover">
+           </div>
+           <span class="font-bold text-lg">Steeny</span>
+         </div>
+         <nav id="menu" class="mt-6 flex flex-col gap-3 px-3 text-base">
+           <div class="menu-link active" data-section="home"><i class="fa-solid fa-house w-5"></i> Главная</div>
+           <div class="menu-link" data-section="search"><i class="fa-solid fa-magnifying-glass w-5"></i> Поиск</div>
+           <div class="menu-link" data-section="favorites"><i class="fa-solid fa-heart w-5"></i> Любимое</div>
+           <div class="menu-link" data-section="settings"><i class="fa-solid fa-gear w-5"></i> Настройки</div>
+         </nav>
+       </div>
     </aside>
 
-    <!-- Центральный контент -->
-    <main class="flex-1 flex flex-col transition-colors duration-200" class="inverse-text" style="padding-left: 220px;">
-      <header class="flex justify-end items-center p-5 border-b border-gray-200 dark:border-gray-700 theme-transition" class="inverse-text">
-        <span class="nameuser" >{{ name }}</span>
-        <img src="{{ avatar }}" class="w-10 h-10 rounded-full" alt="avatar">
+    <main class="flex-1 flex flex-col theme-transition" style="padding-left: 240px;">
+      <header class="flex justify-end items-center p-5 border-b border-gray-200 dark:border-gray-700 theme-transition">
+        <a href="#" id="profileLink" class="flex items-center gap-4 cursor-pointer group">
+
+          <span class="nameuser mr-4">{{ name }}</span>
+          <img src="{{ avatar }}" class="w-10 h-10 rounded-full" alt="avatar">
+        </a>
+        
       </header>
 
       <div id="content" class="flex-1 overflow-y-auto p-8 theme-transition">
-        <!-- Главная -->
+         <div id="section-profile" class="hidden">
+    
+          <div class="profile-header" style="background-image: url('{{ banner }}');">
+            <div class="profile-overlay"></div>
+
+            <!-- Контейнер для аватарки и имени -->
+            <div class="profile-info">
+              <img src="{{ avatar }}" alt="User Avatar" class="profile-avatar fade-in">
+              <div class="profile-text fade-up">
+                <h1 class="profile-name">{{ name }}</h1>
+                <p class="profile-id">ID: {{ user }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-content fade-up-delayed">
+            <button class="menu-link inline-flex" data-section="settings">
+              <i class="fa-solid fa-pencil"></i>
+              Редактировать профиль
+            </button>
+          </div>
+        </div>
         <div id="section-home">
-          <h2 class="text-2xl font-bold mb-4">🎵 Вся музыка</h2>
-          <div class="theme-card">
-            <div class="flex items-center justify-between mb-4">
-              
-              <div class="flex items-center gap-2">
-                <input type="text" placeholder="Фильтр..."
-                       class="px-3 py-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded text-sm theme-transition"
-                       oninput="filterTracks(this.value)">
-                <button class="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white">
-                  <i class="fa-solid fa-arrow-down-wide-short"></i>
-                  
-                </button>
-              </div>
-              <i class="fa-solid "></i> <a href="https://dalink.to/ivan0n"><b>Поддержать донатом</b></a><br>
-            </div>
-            
-            <div class="track-list" id="allTracksList" style=" overflow-x: hidden;">
-              <!-- Треки будут загружаться здесь -->
-            </div>
-          </div>
+           <h2 class="text-2xl font-bold mb-4">🎵 Вся музыка</h2>
+           <div class="theme-card" >
+             <div class="flex items-center justify-between mb-4">
+               <div class="flex items-center gap-2">
+                 <input type="text" placeholder="Фильтр..." class="px-3 py-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded text-sm theme-transition" oninput="filterTracks(this.value)">
+               </div>
+               <a href="https://dalink.to/ivan0n" class="font-bold">Поддержать донатом</a>
+             </div>
+             <div class="track-list" id="allTracksList" style=" overflow-x: hidden;">
+               </div>
+           </div>
         </div>
 
-        <!-- Поиск -->
         <div id="section-search" class="hidden">
-          <h2 class="text-2xl font-bold mb-4">🔍 Поиск</h2>
-          <div class="flex gap-2 mb-4">
-            <input id="searchInput" type="text" placeholder="Искать трек или артиста..."
-                   class="flex-1 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white theme-transition">
-            <button onclick="searchMusic()"
-                    class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 theme-transition">Искать</button>
-          </div>
-          <div class="theme-card">
-            <div id="searchResults" class="track-list" style="overflow-x: hidden;">
-              <!-- Результаты поиска будут здесь -->
-            </div>
-          </div>
+           <h2 class="text-2xl font-bold mb-4">🔍 Поиск</h2>
+           <div class="flex gap-2 mb-4">
+             <input id="searchInput" type="text" placeholder="Искать трек или артиста..." class="flex-1 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white theme-transition">
+             <button onclick="searchMusic()" class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 theme-transition">Искать</button>
+           </div>
+           <div class="theme-card">
+             <div id="searchResults" class="track-list" style="overflow-x: hidden;">
+               </div>
+           </div>
         </div>
 
-        <!-- Любимое -->
         <div id="section-favorites" class="hidden">
-          <h2 class="text-2xl font-bold mb-4">❤️ Любимые треки</h2>
-          <div class="theme-card">
-            <div class="flex items-center justify-between mb-4">
-            </div>
-              <div class="track-list" id="favoritesList" style="overflow-x: hidden;">
-            </div>
-          </div>
+           <h2 class="text-2xl font-bold mb-4">❤️ Любимые треки</h2>
+           <div class="theme-card">
+             <div class="track-list" id="favoritesList" style="overflow-x: hidden;">
+                </div>
+           </div>
         </div>
 
-        <!-- Настройки -->
-        <div id="section-settings" class="hidden">
-          <h2 class="text-2xl font-bold mb-4">⚙️ Настройки</h2>
-          <div class="theme-card">
-            <div>
-              <h2>Имя аккаунта: <b>{{ name }}</b></h2>
-              <h2>username: <b><i>{{ user }}</i></b></h2>
-              <i class="fa-solid "></i> <a href="http://91.205.220.128:2021/"><b>Загрузить свой трек</b></a><br>
-              <i class="fa-solid fa-right-from-bracket"></i> <a href="/logout">Выйти</a>
-            </div>
-          </div>
-          <div class="flex items-center gap-3 mt-4">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" id="themeToggle" class="hidden">
+        
+                <div id="section-settings" class="hidden">
+                  <h2 class="text-2xl font-bold mb-4">⚙️ Настройки</h2>
+                  <div class="flex gap-3 mb-6">
+                    <button class="settings-tab-btn active" data-tab="profile">Профиль</button>
+                    <button class="settings-tab-btn" data-tab="themes">Темы</button>
+                  </div>
+                  <div class="theme-card">
+                    <div id="settings-profile" class="settings-tab">
+                    <div class="theme-card mb-6">
+                      <h3 class="font-bold text-lg mb-3">Редактировать профиль</h3>
+                      <form action="{{ url_for('update_name') }}" method="POST" class="settings-form">
+                        <label for="name">Ваше имя</label>
+                        <input type="text" id="name" name="name" value="{{ name }}" required class="form-input">
+                        <button type="submit" class="form-button">Сохранить имя</button>
+                      </form>
+                    </div>
+                    <div class="theme-card mb-6">
+                      <h3 class="font-bold text-lg mb-3">Сменить аватар</h3>
+                      <form action="{{ url_for('update_avatar') }}" method="POST" enctype="multipart/form-data" class="settings-form">
+                        <label for="avatar">Новый аватар (jpg, png, gif)</label>
+                        <input type="file" id="avatar" name="avatar" accept="image/*" required class="form-input file">
+                        <button type="submit" class="form-button">Загрузить аватар</button>
+                      </form>
+                    </div>
+                    <div class="theme-card mb-6">
+                      <h3 class="font-bold text-lg mb-3">Сменить баннер профиля</h3>
+                      <form action="{{ url_for('update_banner') }}" method="POST" enctype="multipart/form-data" class="settings-form">
+                        <label for="banner">Новый баннер (jpg, png, gif)</label>
+                        <input type="file" id="banner" name="banner" accept="image/*" required class="form-input file">
+                        <button type="submit" class="form-button">Загрузить баннер</button>
+                      </form>
+                    </div>
+                    <div class="theme-card mb-6">
+                      <h3 class="font-bold text-lg mb-3">Сменить пароль</h3>
+                      <form action="{{ url_for('update_password') }}" method="POST" class="settings-form">
+                        <label for="old_password">Старый пароль</label>
+                        <input type="password" id="old_password" name="old_password" required class="form-input">
+                        <label for="new_password" class="mt-2">Новый пароль</label>
+                        <input type="password" id="new_password" name="new_password" required class="form-input">
+                        <button type="submit" class="form-button">Сменить пароль</button>
+                      </form>
+                    </div>
+                  </div>
 
-              <div class="theme-toggle">
-                <div class="theme-indicator"></div>
-                <div class="theme-option" data-theme="light">Light</div>
-                <div class="theme-option" data-theme="dark">Dark</div>
-                <div class="theme-option" data-theme="purple">Purple</div>
-                <div class="theme-option" data-theme="green">Green</div>
+                  </div>
+
+                  
+
+                  
+
+                  <!-- === Вкладка: ТЕМЫ === -->
+                  <div id="settings-themes" class="settings-tab hidden">
+                    <div class="theme-card mb-6">
+                      <h3 class="font-bold text-lg mb-3">Тема оформления</h3>
+                      <div class="flex items-center gap-4 mt-2">
+                        <div class="theme-circle" data-theme="light" title="Светлая" style="background-color: #f3f4f6; border: 1px solid #d1d5db;"></div>
+                        <div class="theme-circle" data-theme="dark" title="Тёмная" style="background-color: #1f2937;"></div>
+                        <div class="theme-circle" data-theme="purple" title="Фиолетовая" style="background-color: #7e22ce;"></div>
+                        <div class="theme-circle" data-theme="green" title="Зелёная" style="background-color: #10b981;"></div>
+                        <div class="theme-circle" data-theme="blue" title="Синяя" style="background-color: #3b82f6;"></div>
+                        <div class="theme-circle" data-theme="red" title="Красная" style="background-color: #ef4444;"></div> 
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="theme-card">
+                    <a href="/logout" class="link text-red-500 hover:underline">
+                      <i class="fa-solid fa-right-from-bracket w-5"></i> Выйти из аккаунта
+                    </a>
+                  </div>
               </div>
-            </label>
-          </div>
+            </div>
+          </main>
         </div>
       </div>
     </main>
   </div>
 
-  <!-- ---- Плеер ---- -->
-  <footer class="player border-t p-4 fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 dark:text-white border-gray-200 dark:border-gray-700 theme-transition">
-    <div class="mb-4">
-      <input type="range" id="seekbar" class="seekbar mb-1" value="0" max="100">
-      <div class="flex justify-between w-full text-xs text-gray-500 dark:text-gray-400">
-        <span id="currentTime">0:00</span>
-        <span id="duration">0:00</span>
-      </div>
-    </div>
-
-    <div class="flex items-center justify-between">
-      <div class="left-meta">
-        <img id="coverImg" src="https://via.placeholder.com/64" class="w-14 h-14 rounded" alt="cover">
-        <div>
-          <div id="trackTitle" class="font-semibold text-sm">Название трека</div>
-          <div id="trackArtist" class="text-xs text-gray-500 dark:text-gray-400">Артист</div>
+  <footer class="player border-t p-4 fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 theme-transition">
+    <div class="fullscreen-visuals">
+        <button id="fullscreenCloseBtn" class="fullscreen-close-btn"><i class="fa-solid fa-compress"></i></button>
+        <img id="fullscreenCoverImg" src="https://via.placeholder.com/300" class="fullscreen-cover" alt="cover">
+        <div class="fullscreen-info">
+            <div id="fullscreenTrackTitle" class="font-bold text-2xl">Название трека</div>
+            <div id="fullscreenTrackArtist" class="text-lg opacity-80">Артист</div>
         </div>
-        <button id="favBtn" class="ml-3 text-2xl text-gray-400 hover:text-yellow-500"><i class="fa-solid fa-star"></i></button>
+    </div>
+    
+    <div class="player-content">
+      <div class="mb-2">
+        <input type="range" id="seekbar" class="seekbar" value="0" max="100">
+        <div class="flex justify-between w-full text-xs text-gray-500 dark:text-gray-400 theme-transition">
+          <span id="currentTime">0:00</span>
+          <span id="duration">0:00</span>
+        </div>
       </div>
 
-      <div class="controls-center">
-        <button id="prevBtn" class="player-btn"><i class="fa-solid fa-backward-step"></i></button>
-        <button id="playBtn" class="player-btn play"><i id="playIcon" class="fa-solid fa-play"></i></button>
-        <button id="nextBtn" class="player-btn"><i class="fa-solid fa-forward-step"></i></button>
-        <button id="repeatBtn" class="player-btn"><i id="repeatIcon" class="fa-solid fa-repeat"></i></button>
-      </div>
+      <div class="flex items-center justify-between">
+        <div class="left-meta">
+          <img id="coverImg" src="https://via.placeholder.com/64" class="w-14 h-14 rounded" alt="cover">
+          <div>
+            <div id="trackTitle" class="font-semibold text-sm">Название трека</div>
+            <div id="trackArtist" class="text-xs text-gray-500 dark:text-gray-400 theme-transition">Артист</div>
+          </div>
+          <button id="favBtn" class="ml-3 text-2xl text-gray-400 hover:text-yellow-500"><i class="fa-solid fa-star"></i></button>
+        </div>
 
-      <div class="right-volume">
-        <i id="volumeIcon" class="fa-solid fa-volume-high"></i>
-        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="1">
+        <div class="controls-center">
+          <button id="prevBtn" class="player-btn"><i class="fa-solid fa-backward-step"></i></button>
+          <button id="playBtn" class="player-btn play"><i id="playIcon" class="fa-solid fa-play"></i></button>
+          <button id="nextBtn" class="player-btn"><i class="fa-solid fa-forward-step"></i></button>
+          <button id="repeatBtn" class="player-btn"><i id="repeatIcon" class="fa-solid fa-repeat"></i></button>
+        </div>
+
+        <div class="right-volume">
+          <i id="volumeIcon" class="fa-solid fa-volume-high"></i>
+          <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="1">
+          <button id="fullscreenBtn" class="player-btn small-btn ml-2"><i class="fa-solid fa-expand"></i></button>
+        </div>
       </div>
     </div>
-
+    
     <audio id="audioPlayer"></audio>
   </footer>
 
   <script src="{{ url_for('static', filename='music_player_js/homepage.js') }}"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuLinks = document.querySelectorAll('.menu-link');
+        const contentSections = document.querySelectorAll('#content > div[id^="section-"]');
+        const profileLink = document.getElementById('profileLink');
 
+        function showSection(sectionId) {
+            // Скрываем все секции
+            contentSections.forEach(section => {
+                section.classList.add('hidden');
+            });
+            // Показываем нужную
+            const activeSection = document.getElementById(`section-${sectionId}`);
+            if (activeSection) {
+                activeSection.classList.remove('hidden');
+            }
+            // Обновляем активную ссылку в меню
+            menuLinks.forEach(link => {
+                link.classList.toggle('active', link.dataset.section === sectionId);
+            });
+        }
 
+        // Клики по меню
+        menuLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.dataset.section;
+                showSection(sectionId);
+            });
+        });
+
+        // Клик по профилю в шапке
+        if (profileLink) {
+            profileLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                showSection('profile');
+            });
+        }
+        
+        // По умолчанию показываем 'home'
+        showSection('home');
+    });
+  </script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Переключение вкладок в настройках
+    const tabButtons = document.querySelectorAll('.settings-tab-btn');
+    const tabs = document.querySelectorAll('.settings-tab');
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabId = btn.dataset.tab;
+
+        // Активная кнопка
+        tabButtons.forEach(b => b.classList.toggle('active', b === btn));
+
+        // Показ нужного раздела
+        tabs.forEach(tab => {
+          tab.classList.toggle('hidden', tab.id !== 'settings-' + tabId);
+        });
+      });
+    });
+  });
+  </script>
 
 </body>
 </html>

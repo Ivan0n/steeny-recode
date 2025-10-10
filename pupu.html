@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MusicStream — Steeny</title>
+
+  <script>
+    tailwind = window.tailwind || {};
+    tailwind.config = { darkMode: 'class' };
+  </script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+  <link rel="icon" type="image/png" href="https://i.pinimg.com/736x/5a/d6/ef/5ad6ef496c7a7c342b9b0fdf2bce426a.jpg">
+
+  <script>
+    // JS для смены тем (остается без изменений)
+    document.addEventListener('DOMContentLoaded', () => {
+      const htmlEl = document.documentElement;
+      const themeCircles = document.querySelectorAll('.theme-circle');
+      const themes = ['light', 'dark', 'purple', 'green', 'blue'];
+      function setTheme(theme) {
+        themes.forEach(t => htmlEl.classList.remove(t));
+        if (theme !== 'light') htmlEl.classList.add(theme);
+        localStorage.setItem('theme', theme);
+        themeCircles.forEach(circle => {
+          circle.classList.toggle('active', circle.dataset.theme === theme);
+        });
+      }
+      const stored = localStorage.getItem('theme') || 'light';
+      setTheme(stored);
+      themeCircles.forEach(circle => {
+        circle.addEventListener('click', () => setTheme(circle.dataset.theme));
+      });
+    });
+  </script>
+</head>
+
+<body class="bg-white text-black dark:bg-gray-900 dark:text-white flex flex-col min-h-screen text-[15px] theme-transition">
+  <div class="flex flex-1">
+    <aside class="w-60 border-r flex flex-col justify-between theme-transition" id="sidebar">
+      <div>
+        <div class="flex items-center gap-3 p-5 border-b border-gray-200 dark:border-gray-700 theme-transition">
+          <div class="w-10 h-10 rounded flex items-center justify-center font-bold text-lg overflow-hidden">
+            <img src="https://i.pinimg.com/736x/5a/d6/ef/5ad6ef496c7a7c342b9b0fdf2bce426a.jpg" alt="" class="w-full h-full object-cover">
+          </div>
+          <span class="font-bold text-lg">Steeny</span>
+        </div>
+        <nav id="menu" class="mt-6 flex flex-col gap-3 px-3 text-base">
+          <div class="menu-link active" data-section="home"><i class="fa-solid fa-house w-5"></i> Главная</div>
+          <div class="menu-link" data-section="search"><i class="fa-solid fa-magnifying-glass w-5"></i> Поиск</div>
+          <div class="menu-link" data-section="favorites"><i class="fa-solid fa-heart w-5"></i> Любимое</div>
+          <div class="menu-link" data-section="settings"><i class="fa-solid fa-gear w-5"></i> Настройки</div>
+        </nav>
+      </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col theme-transition" style="padding-left: 240px;">
+      <header class="flex justify-end items-center p-5 border-b border-gray-200 dark:border-gray-700 theme-transition">
+        <a href="#" id="profileLink" class="flex items-center gap-4 cursor-pointer group">
+            <span class="nameuser group-hover:underline">{{ name }}</span>
+            <img src="{{ avatar }}" class="w-10 h-10 rounded-full object-cover" alt="avatar">
+        </a>
+      </header>
+
+      <div id="content" class="flex-1 overflow-y-auto p-8 theme-transition">
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-messages-container mb-4">
+            {% for category, message in messages %}
+              <div class="p-3 rounded-md text-white {{ 'bg-red-500' if category == 'error' else 'bg-green-500' }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div id="section-profile" class="hidden">
+            <div class="profile-header"></div>
+            <div class="profile-content">
+                <img src="{{ avatar }}" class="profile-avatar" alt="User Avatar">
+                <h1 class="text-5xl font-bold mt-4">{{ name }}</h1>
+                <p class="text-gray-500 dark:text-gray-400 mt-1">{{ user }}</p>
+                
+                <div class="mt-8 text-center">
+                    <button class="menu-link inline-flex" data-section="settings">
+                        <i class="fa-solid fa-pencil"></i>
+                        Редактировать профиль
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="section-home">
+          <h2 class="text-2xl font-bold mb-4">🎵 Вся музыка</h2>
+          <div class="theme-card">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <input type="text" placeholder="Фильтр..." class="px-3 py-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded text-sm theme-transition" oninput="filterTracks(this.value)">
+              </div>
+              <a href="https://dalink.to/ivan0n" class="font-bold">Поддержать донатом</a>
+            </div>
+            <div class="track-list" id="allTracksList" style=" overflow-x: hidden;"></div>
+          </div>
+        </div>
+
+        <div id="section-search" class="hidden">
+            </div>
+
+        <div id="section-favorites" class="hidden">
+            </div>
+
+        <div id="section-settings" class="hidden">
+          <h2 class="text-2xl font-bold mb-4">⚙️ Настройки</h2>
+          
+          <div class="theme-card mb-6">
+            <h3 class="font-bold text-lg mb-3">Редактировать профиль</h3>
+            <form action="{{ url_for('update_name') }}" method="POST" class="settings-form">
+                <label for="name">Ваше имя</label>
+                <input type="text" id="name" name="name" value="{{ name }}" required class="form-input">
+                <button type="submit" class="form-button">Сохранить имя</button>
+            </form>
+          </div>
+          
+          <div class="theme-card mb-6">
+            <h3 class="font-bold text-lg mb-3">Сменить аватар</h3>
+            <form action="{{ url_for('update_avatar') }}" method="POST" enctype="multipart/form-data" class="settings-form">
+                <label for="avatar">Новый аватар (jpg, png, gif)</label>
+                <input type="file" id="avatar" name="avatar" accept="image/*" required class="form-input file">
+                <button type="submit" class="form-button">Загрузить аватар</button>
+            </form>
+          </div>
+
+          <div class="theme-card mb-6">
+            <h3 class="font-bold text-lg mb-3">Сменить пароль</h3>
+            <form action="{{ url_for('update_password') }}" method="POST" class="settings-form">
+                <label for="old_password">Старый пароль</label>
+                <input type="password" id="old_password" name="old_password" required class="form-input">
+                <label for="new_password" class="mt-2">Новый пароль</label>
+                <input type="password" id="new_password" name="new_password" required class="form-input">
+                <button type="submit" class="form-button">Сменить пароль</button>
+            </form>
+          </div>
+
+          <div class="theme-card mb-6">
+             <h3 class="font-bold text-lg mb-3">Тема оформления</h3>
+             <div class="flex items-center gap-4 mt-2">
+               <div class="theme-circle" data-theme="light" title="Светлая" style="background-color: #f3f4f6; border: 1px solid #d1d5db;"></div>
+               <div class="theme-circle" data-theme="dark" title="Тёмная" style="background-color: #1f2937;"></div>
+               <div class="theme-circle" data-theme="purple" title="Фиолетовая" style="background-color: #7e22ce;"></div>
+               <div class="theme-circle" data-theme="green" title="Зелёная" style="background-color: #10b981;"></div>
+               <div class="theme-circle" data-theme="blue" title="Синяя" style="background-color: #3b82f6;"></div>
+             </div>
+          </div>
+          <div class="theme-card">
+              <a href="/logout" class="link text-red-500 hover:underline"><i class="fa-solid fa-right-from-bracket w-5"></i> Выйти из аккаунта</a>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <footer class="player ...">
+    </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuLinks = document.querySelectorAll('.menu-link');
+        const contentSections = document.querySelectorAll('#content > div[id^="section-"]');
+        const profileLink = document.getElementById('profileLink');
+
+        function showSection(sectionId) {
+            // Скрываем все секции
+            contentSections.forEach(section => {
+                section.classList.add('hidden');
+            });
+            // Показываем нужную
+            const activeSection = document.getElementById(`section-${sectionId}`);
+            if (activeSection) {
+                activeSection.classList.remove('hidden');
+            }
+            // Обновляем активную ссылку в меню
+            menuLinks.forEach(link => {
+                link.classList.toggle('active', link.dataset.section === sectionId);
+            });
+        }
+
+        // Клики по меню
+        menuLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.dataset.section;
+                showSection(sectionId);
+            });
+        });
+
+        // Клик по профилю в шапке
+        if (profileLink) {
+            profileLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                showSection('profile');
+            });
+        }
+        
+        // По умолчанию показываем 'home'
+        showSection('home');
+    });
+  </script>
+  
+  <script src="{{ url_for('static', filename='music_player_js/homepage.js') }}"></script>
+</body>
+</html>

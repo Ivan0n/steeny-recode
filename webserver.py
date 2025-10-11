@@ -7,18 +7,18 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.secret_key = "steeny_key_5252525byby235672153"
 
-# --- НОВОЕ: Настройки для загрузки файлов ---
+
 UPLOAD_FOLDER = 'uploads/avatars'
 UPLOAD_FOLDER_BANNERS = 'uploads/banners'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['UPLOAD_FOLDER_BANNERS'] = UPLOAD_FOLDER_BANNERS
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16 MB max size
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16 MB
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-# ---------------------------------------------
+
 
 
 def load_users():
@@ -62,7 +62,7 @@ def login():
         email = (request.form.get("email") or "").strip()
         password = (request.form.get("password") or "").strip()
 
-        # В реальном приложении здесь должна быть проверка хеша пароля!
+
         if email in USERS and password == USERS[email]["password"]:
             token = secrets.token_hex(16)
             TOKENS[email] = token
@@ -82,7 +82,7 @@ def secret():
     if not user_email or TOKENS.get(user_email) != token:
         return redirect(url_for("login"))
     
-    # Получаем свежие данные пользователя
+
     user_data = USERS.get(user_email, {})
     
     return render_template(
@@ -175,7 +175,6 @@ def update_password():
         flash("Новый пароль слишком короткий.", "error")
         return redirect(url_for('secret'))
     
-    # В реальном приложении здесь нужно хешировать новый пароль!
     USERS[user_email]['password'] = new_password
     save_users()
     flash("Пароль успешно изменён!", "success")
@@ -199,14 +198,14 @@ def update_avatar():
         return redirect(url_for('secret'))
         
     if file and allowed_file(file.filename):
-        # Создаём безопасное и уникальное имя файла
+
         filename = secure_filename(file.filename)
         unique_filename = f"{user_email.split('@')[0]}_{secrets.token_hex(4)}_{filename}"
         
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
         file.save(file_path)
         
-        # Генерируем URL для файла
+
         avatar_url = url_for('uploaded_file', filename=unique_filename)
         
         USERS[user_email]['avatar'] = avatar_url
@@ -217,9 +216,6 @@ def update_avatar():
 
     return redirect(url_for('secret'))
 
-# --- КОНЕЦ НОВЫХ МАРШРУТОВ ---
-
-# ... (остальные ваши маршруты: logout, playlist_data и т.д. остаются без изменений) ...
 
 @app.route("/logout")
 def logout():
@@ -229,22 +225,17 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
-# ... (остальные ваши маршруты)
+
 @app.route("/avatar/<username>")
 def avatar(username):
-    # Этот маршрут теперь можно удалить или переделать, 
-    # так как аватарки отдаются через /uploads/avatars/
-    # Но для обратной совместимости можно оставить
     if username not in USERS:
         return jsonify({"error": "Пользователь не найден"}), 404
     
     avatar_url = USERS[username].get("avatar", "")
     if not avatar_url:
         return jsonify({"error": "Аватар не найден"}), 404
-    # Если URL абсолютный (старый формат), редиректим
     if avatar_url.startswith('http'):
         return redirect(avatar_url)
-    # Если URL локальный (новый формат), отдаем файл
     return redirect(avatar_url)
 
 @app.route("/playlist/data")
@@ -354,14 +345,13 @@ def search_music():
     if not user or TOKENS.get(user) != token:
         return jsonify({"error": "Не авторизован"}), 401
     
-    # ПРИМЕЧАНИЕ: изменил имя параметра с 'query' на 'q' для краткости, как в твоем JS
     query = request.args.get('q', '').lower()
     
     if not query:
         return jsonify({'tracks': [], 'artists': []})
     
     found_tracks = []
-    found_artists = set() # Используем set для уникальности исполнителей
+    found_artists = set() 
     
     try:
         with open('base/music/music.csv', 'r', encoding='utf-8') as f:
@@ -381,16 +371,12 @@ def search_music():
                         'path': row['path']
                     })
                 
-                # Ищем исполнителей
                 if query in artist_name:
-                    # Добавляем в формате (Имя, Картинка первого трека)
-                    # В реальном проекте у артистов были бы свои картинки
                     found_artists.add((row['artist'], row['img']))
 
     except FileNotFoundError:
         pass
     
-    # Преобразуем set в список словарей
     artists_list = [{'name': name, 'cover': cover} for name, cover in found_artists]
 
     return jsonify({'tracks': found_tracks, 'artists': artists_list})

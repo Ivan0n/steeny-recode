@@ -380,3 +380,46 @@ def search_music():
     artists_list = [{'name': name, 'cover': cover} for name, cover in found_artists]
 
     return jsonify({'tracks': found_tracks, 'artists': artists_list})
+
+@app.route("/playlist/favorites")
+def get_all_favorites():
+    """Отдаёт полный список любимых треков пользователя."""
+    user = session.get("user")
+    token = session.get("token")
+    if not user or TOKENS.get(user) != token:
+        return jsonify({"error": "Не авторизован"}), 401
+
+    # Сначала получаем ID всех любимых треков пользователя
+    favorite_ids = set()
+    try:
+        with open('base/user/favorites.csv', 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row['user'] == user:
+                    favorite_ids.add(row['id'])
+    except FileNotFoundError:
+        return jsonify([]) # Если файла нет, возвращаем пустой список
+
+    if not favorite_ids:
+        return jsonify([]) # Если у пользователя нет любимых треков
+
+    # Теперь ищем полную информацию по этим ID в основном файле с музыкой
+    favorite_tracks = []
+    try:
+        with open('base/music/music.csv', 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row['id'] in favorite_ids:
+                    favorite_tracks.append({
+                        'id': row['id'],
+                        'title': row['musicname'],
+                        'artist': row['artist'],
+                        'src': f"http://185.143.238.53:5000/music/{row['artist']}/{row['musicname']}",
+                        'cover': row['img'],
+                        'path': row['path'],
+                        'favorite': True  # Очевидно, что это избранный трек
+                    })
+    except FileNotFoundError:
+        return jsonify({"error": "Файл музыки не найден"}), 404
+
+    return jsonify(favorite_tracks)

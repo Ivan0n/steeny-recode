@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === Глобальные переменные ===
     let allTracks = [];
+    let favoriteTracks = []; // ДОБАВЛЕНО: Отдельный массив для любимых треков
     let searchResults = [];
     let currentPlaylist = [];
     let currentTrackIndex = 0;
@@ -38,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const trackLimit = 20;
     let isLoading = false;
     let allLoaded = false;
+    let favoritesLoaded = false; // ДОБАВЛЕНО: Флаг, чтобы не загружать любимые треки повторно
 
     // === Вспомогательные функции ===
     function formatTime(sec) {
@@ -74,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         row.querySelector('.fav-btn').addEventListener('click', (e) => {
             e.stopPropagation();
-            toggleFavoriteForTrack(track, section);
+            toggleFavoriteForTrack(track); // Убрали 'section', так как логика теперь централизована
         });
 
         row.addEventListener('click', () => {
@@ -84,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return row;
     }
-    
+
     // === Рендеры списков ===
     function renderList(container, tracks, section) {
         if (!container) return;
@@ -102,15 +104,35 @@ document.addEventListener('DOMContentLoaded', () => {
         renderList(document.getElementById('allTracksList'), allTracks, 'home');
     }
 
+    // ИЗМЕНЕНО: Функция теперь рендерит данные из нового, отдельного массива
     function renderFavorites() {
-        const favoriteTracks = allTracks.filter(t => t.favorite);
         renderList(document.getElementById('favoritesList'), favoriteTracks, 'favorites');
     }
 
     function renderSearchResults() {
         renderList(document.getElementById('searchResults'), searchResults, 'search');
     }
-    
+
+    // ДОБАВЛЕНО: Новая функция для загрузки ВСЕХ любимых треков с сервера
+    async function loadFavoriteTracks() {
+        if (favoritesLoaded) return; // Не грузить, если уже загружено
+        console.log('Загрузка любимых треков...');
+
+        try {
+            const res = await fetch('/playlist/favorites'); // Запрос к новому эндпоинту
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            const data = await res.json();
+            
+            if (data && !data.error) {
+                favoriteTracks = data; // Сохраняем в отдельный массив
+                renderFavorites(); // Рендерим список
+                favoritesLoaded = true; // Устанавливаем флаг
+            }
+        } catch (err) {
+            console.error("Ошибка загрузки любимых треков:", err);
+        }
+    }
+
     // === Ленивая загрузка треков ===
     async function loadAllTracks(initial = false) {
         if (isLoading || allLoaded) return;
@@ -125,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 allTracks.push(...uniqueTracks);
                 renderAllTracks();
                 trackOffset += data.length;
-                renderFavorites();
+                // ИЗМЕНЕНО: Удалена строка renderFavorites(); так как любимые теперь грузятся отдельно
             } else {
                 allLoaded = true;
             }
@@ -147,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isPlaying = false;
         updatePlayIcon();
     }
-    
+
     function togglePlayPause() {
         if (!audio.src) return;
         isPlaying ? pauseTrack() : playTrack();
@@ -159,16 +181,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function playFromSection(section, index) {
         currentSection = section;
-        switch(section) {
-            case 'home':      currentPlaylist = allTracks; break;
-            case 'favorites': currentPlaylist = allTracks.filter(t => t.favorite); break;
-            case 'search':    currentPlaylist = searchResults; break;
-            default:          currentPlaylist = allTracks;
+        switch (section) {
+            case 'home':
+                currentPlaylist = allTracks;
+                break;
+            case 'favorites':
+                // ИЗМЕНЕНО: Плейлист теперь берется из нового массива
+                currentPlaylist = favoriteTracks;
+                break;
+            case 'search':
+                currentPlaylist = searchResults;
+                break;
+            default:
+                currentPlaylist = allTracks;
         }
 
         if (!currentPlaylist || currentPlaylist.length === 0) return;
         currentTrackIndex = Math.max(0, Math.min(index, currentPlaylist.length - 1));
-        
+
         loadTrack(currentTrackIndex);
         playTrack();
     }
@@ -183,7 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
         coverImg.src = coverUrl;
         audio.src = track.src || "";
 
-        // Обновляем полноэкранный плеер
         fullscreenTitle.textContent = track.title;
         fullscreenArtist.textContent = track.artist;
         fullscreenCoverImg.src = coverUrl;
@@ -191,13 +220,13 @@ document.addEventListener('DOMContentLoaded', () => {
         updateFavBtn(!!track.favorite);
         updateActiveRows();
     }
-    
+
     function nextTrack() {
         currentTrackIndex = (currentTrackIndex + 1) % currentPlaylist.length;
         loadTrack(currentTrackIndex);
         playTrack();
     }
-    
+
     function prevTrack() {
         currentTrackIndex = (currentTrackIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
         loadTrack(currentTrackIndex);
@@ -209,28 +238,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentTrack = currentPlaylist[currentTrackIndex];
         if (!currentTrack) return;
 
-        const activeRow = document.querySelector(`.track-row[data-id="${currentTrack.id}"][data-section="${currentSection}"]`);
-        if(activeRow) {
-            activeRow.classList.add('active');
-        }
+        const activeRows = document.querySelectorAll(`.track-row[data-id="${currentTrack.id}"]`);
+        activeRows.forEach(row => {
+             if (row.dataset.section === currentSection) {
+                 row.classList.add('active');
+             }
+        });
     }
 
     // === Избранное ===
     async function toggleFavoriteForTrack(track) {
         if (!track || !track.id) return;
-        
+
         const originalStatus = track.favorite;
         track.favorite = !track.favorite; // Оптимистичное обновление UI
-        
+
         // Обновляем все UI элементы сразу
         updateUIAfterFavoriteToggle(track);
-        
+
         try {
             const endpoint = originalStatus ? "/playlist/remove" : "/playlist/add";
             await fetch(endpoint, {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({id: track.id})
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    id: track.id
+                })
             });
         } catch (err) {
             console.error("Ошибка при смене избранного:", err);
@@ -238,26 +273,45 @@ document.addEventListener('DOMContentLoaded', () => {
             updateUIAfterFavoriteToggle(track);
         }
     }
-    
+
+    // ИЗМЕНЕНО: Полностью переписанная функция для поддержки двух списков
     function updateUIAfterFavoriteToggle(track) {
+        // 1. Обновляем статус в основном списке allTracks (если трек там есть)
         const mainTrack = allTracks.find(t => t.id === track.id);
-        if(mainTrack) mainTrack.favorite = track.favorite;
-      
+        if (mainTrack) {
+            mainTrack.favorite = track.favorite;
+        }
+
+        // 2. Обновляем отдельный массив favoriteTracks
+        if (track.favorite) {
+            // Добавляем, если его там еще нет (предотвращает дублирование)
+            if (!favoriteTracks.some(fav => fav.id === track.id)) {
+                favoriteTracks.unshift(track); // Добавляем в начало
+            }
+        } else {
+            // Удаляем из списка любимых
+            favoriteTracks = favoriteTracks.filter(fav => fav.id !== track.id);
+        }
+
+        // 3. Обновляем иконки звезд везде
         document.querySelectorAll(`.track-row[data-id="${track.id}"] .fa-star`).forEach(icon => {
             icon.classList.toggle('text-yellow-500', track.favorite);
         });
 
+        // 4. Обновляем кнопку в плеере, если это текущий трек
         if (currentPlaylist[currentTrackIndex]?.id === track.id) {
             updateFavBtn(track.favorite);
         }
 
+        // 5. Перерисовываем список любимых из обновленного массива
         renderFavorites();
     }
+
 
     function updateFavBtn(isFavorite) {
         favBtn.querySelector('i').classList.toggle('text-yellow-500', isFavorite);
     }
-    
+
     function toggleFavorite() {
         const track = currentPlaylist[currentTrackIndex];
         if (!track) return;
@@ -272,27 +326,42 @@ document.addEventListener('DOMContentLoaded', () => {
             renderSearchResults();
             return;
         }
-
+    
         try {
             const res = await fetch(`/search?q=${encodeURIComponent(query)}`);
             const data = await res.json();
-            searchResults = data.map(sr => {
-                const found = allTracks.find(t => t.id === sr.id);
-                return { ...sr, favorite: !!found?.favorite };
+            // ИЗМЕНЕНО: Ваш бэкенд возвращает объект {tracks: [], artists: []}
+            const tracks = data.tracks || []; 
+    
+            searchResults = tracks.map(sr => {
+                // ИЗМЕНЕНО: Проверяем статус 'favorite' в обоих массивах для точности
+                const isFavorite = favoriteTracks.some(fav => fav.id === sr.id) || 
+                                   allTracks.find(t => t.id === sr.id)?.favorite;
+                return { ...sr, favorite: !!isFavorite };
             });
             renderSearchResults();
         } catch (err) {
             console.error("Ошибка поиска:", err);
         }
     }
-    
+
+    // Глобализируем функцию поиска для вызова из HTML (onclick="searchMusic()")
+    window.searchMusic = searchMusic;
+
     // === Навигация по секциям ===
+    // Эта функция остается здесь, так как она вызывается из обработчика ниже
     function switchSection(targetSection) {
         document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('hidden'));
-        document.getElementById(`section-${targetSection}`).classList.remove('hidden');
+        const targetElement = document.getElementById(`section-${targetSection}`);
+        if(targetElement) {
+            targetElement.classList.remove('hidden');
+        }
 
         document.querySelectorAll('.menu-link').forEach(el => el.classList.remove('active'));
-        document.querySelector(`.menu-link[data-section="${targetSection}"]`).classList.add('active');
+        const activeLink = document.querySelector(`.menu-link[data-section="${targetSection}"]`);
+        if (activeLink) {
+            activeLink.classList.add('active');
+        }
     }
 
     // === Обработчики событий ===
@@ -300,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
     nextBtn.addEventListener('click', nextTrack);
     prevBtn.addEventListener('click', prevTrack);
     favBtn.addEventListener('click', toggleFavorite);
-    
+
     audio.addEventListener('timeupdate', () => {
         if (audio.duration) {
             seekbar.value = (audio.currentTime / audio.duration) * 100;
@@ -311,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
     audio.addEventListener('loadedmetadata', () => {
         durationElem.textContent = formatTime(audio.duration);
     });
-    
+
     audio.addEventListener('ended', () => {
         isRepeating ? playTrack() : nextTrack();
     });
@@ -321,29 +390,36 @@ document.addEventListener('DOMContentLoaded', () => {
             audio.currentTime = (seekbar.value / 100) * audio.duration;
         }
     });
-    
+
     volumeSlider.addEventListener('input', () => {
         audio.volume = volumeSlider.value;
         volumeIcon.className = `fa-solid ${volumeSlider.value == 0 ? 'fa-volume-xmark' : 'fa-volume-high'}`;
     });
-    
+
     repeatBtn.addEventListener('click', () => {
         isRepeating = !isRepeating;
-        repeatIcon.classList.toggle('text-blue-500', isRepeating); // Используем акцентный цвет для активности
+        repeatIcon.classList.toggle('text-blue-500', isRepeating);
     });
 
     document.getElementById('searchInput').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') searchMusic();
     });
 
+    // ИЗМЕНЕНО: Добавлена логика вызова загрузки любимых треков
     document.querySelectorAll('.menu-link').forEach(link => {
-        link.addEventListener('click', () => switchSection(link.dataset.section));
+        link.addEventListener('click', () => {
+            const sectionId = link.dataset.section;
+            if (sectionId === 'favorites') {
+                loadFavoriteTracks(); // Вызываем загрузку только при клике на "Любимое"
+            }
+            switchSection(sectionId);
+        });
     });
 
     // === Полноэкранный режим ===
     fullscreenBtn.addEventListener('click', () => playerFooter.classList.add('player-fullscreen'));
     fullscreenCloseBtn.addEventListener('click', () => playerFooter.classList.remove('player-fullscreen'));
-    
+
     // === Инициализация ===
     const trackListContainer = document.getElementById('allTracksList');
     if (trackListContainer) {
@@ -354,6 +430,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    loadAllTracks(true);
-    switchSection('home');
+    loadAllTracks(true); // Загружаем первую порцию треков на главной
+    // switchSection('home'); // Удалено, так как навигация теперь в newhome.html
 });

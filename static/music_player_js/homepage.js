@@ -1,3 +1,10 @@
+import {
+    updateMediaMetadata,
+    updateMediaPlaybackState,
+    updateMediaPositionState,
+    initMediaSessionHandlers
+} from  './media-session.js';
+
 document.addEventListener('DOMContentLoaded', () => {
     // === Элементы DOM ===
     const audio = document.getElementById('audioPlayer');
@@ -39,7 +46,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const trackLimit = 20;
     let isLoading = false;
     let allLoaded = false;
-    let favoritesLoaded = false; // ДОБАВЛЕНО: Флаг, чтобы не загружать любимые треки повторно
+    let favoritesLoaded = false;
+    function setupMediaSessionHandlers() {
+    initMediaSessionHandlers({
+            play: playTrack,
+            pause: pauseTrack,
+            next: nextTrack,
+            prev: prevTrack,
+        });
+    }
+
+    setupMediaSessionHandlers();
+ // ДОБАВЛЕНО: Флаг, чтобы не загружать любимые треки повторно
 
     // === Вспомогательные функции ===
     function formatTime(sec) {
@@ -162,12 +180,16 @@ document.addEventListener('DOMContentLoaded', () => {
         audio.play();
         isPlaying = true;
         updatePlayIcon();
+        updateMediaPlaybackState(true);
+        if ('mediaSession' in navigator) { navigator.mediaSession.playbackState = 'playing'; }
     }
 
     function pauseTrack() {
         audio.pause();
         isPlaying = false;
         updatePlayIcon();
+        updateMediaPlaybackState(false);
+        if ('mediaSession' in navigator) { navigator.mediaSession.playbackState = 'paused'; }
     }
 
     function togglePlayPause() {
@@ -219,6 +241,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateFavBtn(!!track.favorite);
         updateActiveRows();
+        updateMediaMetadata({
+            title: track.title,
+            artist: track.artist,
+            cover: coverUrl
+        });
+
     }
 
     function nextTrack() {
@@ -374,6 +402,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (audio.duration) {
             seekbar.value = (audio.currentTime / audio.duration) * 100;
             currentTimeElem.textContent = formatTime(audio.currentTime);
+
+            // >>> НАЧАЛО НОВОГО КОДА ВНУТРИ ОБРАБОТЧИКА <<<
+            // Обновляем позицию в системном плеере
+            if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+                navigator.mediaSession.setPositionState({
+                    duration: audio.duration,
+                    playbackRate: audio.playbackRate,
+                    position: audio.currentTime,
+                });
+            }
+            // >>> КОНЕЦ НОВОГО КОДА ВНУТРИ ОБРАБОТЧИКА <<<
         }
     });
 
@@ -430,6 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    loadAllTracks(true); // Загружаем первую порцию треков на главной
+    loadAllTracks(true);
+    setupMediaSessionHandlers(); // Загружаем первую порцию треков на главной
     // switchSection('home'); // Удалено, так как навигация теперь в newhome.html
 });

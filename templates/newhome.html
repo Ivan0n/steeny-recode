@@ -267,7 +267,8 @@
     <audio id="audioPlayer"></audio>
   </footer>
 
-  <script src="{{ url_for('static', filename='music_player_js/homepage.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='music_player_js/homepage.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='music_player_js/media-session.js') }}"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
         const menuLinks = document.querySelectorAll('.menu-link');

@@ -5,6 +5,20 @@
 
 [steeny.fun](https://steeny.fun/)
 
+<hr/>
+Start server
+
+```bash
+python3 __main__.py  #start python server
+```
+Libraries
+```bash
+pip install Flask  #server library
+
+pip install secrets #library for data encryption
+
+pip install Werkzeug #library for some things
+```
 
 <img width="500" height="900" alt="image" src="https://github.com/user-attachments/assets/9ab25808-4e05-43f8-ac42-b82ed77ee9a6" />
 <img width="500" height="900" alt="image" src="https://github.com/user-attachments/assets/cd00c0cf-8455-4c78-be26-066dedd90619" />

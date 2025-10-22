@@ -1,8 +1,4 @@
-/**
- * Модуль для управления Media Session API (системный плеер).
- */
 
-// Проверяем, поддерживается ли API
 const isMediaSessionSupported = 'mediaSession' in navigator;
 
 /**
@@ -55,8 +51,7 @@ export function updateMediaPositionState(audio) {
 }
 
 /**
- * Инициализирует обработчики действий (нажатия на кнопки в системном плеере).
- * @param {object} handlers - Объект с функциями-обработчиками: { play, pause, next, prev }.
+* @param {object} handlers 
  */
 export function initMediaSessionHandlers({ play, pause, next, prev }) {
     if (!isMediaSessionSupported) return;

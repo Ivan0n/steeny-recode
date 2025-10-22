@@ -6,7 +6,6 @@ import {
 } from  './media-session.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // === Элементы DOM ===
     const audio = document.getElementById('audioPlayer');
     const playBtn = document.getElementById('playBtn');
     const playIcon = document.getElementById('playIcon');
@@ -358,14 +357,17 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const res = await fetch(`/search?q=${encodeURIComponent(query)}`);
             const data = await res.json();
-            // ИЗМЕНЕНО: Ваш бэкенд возвращает объект {tracks: [], artists: []}
             const tracks = data.tracks || []; 
     
             searchResults = tracks.map(sr => {
-                // ИЗМЕНЕНО: Проверяем статус 'favorite' в обоих массивах для точности
-                const isFavorite = favoriteTracks.some(fav => fav.id === sr.id) || 
-                                   allTracks.find(t => t.id === sr.id)?.favorite;
-                return { ...sr, favorite: !!isFavorite };
+                // Это клиентская проверка (на случай, если списки обновились)
+                const clientFavorite = favoriteTracks.some(fav => fav.id === sr.id) || 
+                                       allTracks.find(t => t.id === sr.id)?.favorite;
+                
+                // --- ИСПРАВЛЕНИЕ ---
+                // 'sr.favorite' - это статус, который пришел с сервера.
+                // Мы используем его ИЛИ клиентский статус.
+                return { ...sr, favorite: sr.favorite || !!clientFavorite };
             });
             renderSearchResults();
         } catch (err) {

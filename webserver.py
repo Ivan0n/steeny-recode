@@ -350,6 +350,19 @@ def search_music():
     if not query:
         return jsonify({'tracks': [], 'artists': []})
     
+    # --- НАЧАЛО ИСПРАВЛЕНИЯ ---
+    # 1. Загружаем ID любимых треков текущего пользователя
+    favorites = set()
+    try:
+        with open('base/user/favorites.csv', 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row['user'] == user:
+                    favorites.add(row['id'])
+    except FileNotFoundError:
+        pass # Это нормально, если файла еще нет
+    # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
+
     found_tracks = []
     found_artists = set() 
     
@@ -362,13 +375,20 @@ def search_music():
 
                 # Ищем треки
                 if query in track_title or query in artist_name:
+                    
+                    # --- НАЧАЛО ИСПРАВЛЕНИЯ ---
+                    # 2. Определяем, является ли трек избранным
+                    is_favorite = row['id'] in favorites
+                    # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
+
                     found_tracks.append({
                         'id': row['id'],
                         'title': row['musicname'],
                         'artist': row['artist'],
                         'src': f"http://185.143.238.53:5000/music/{row['artist']}/{row['musicname']}",
                         'cover': row['img'],
-                        'path': row['path']
+                        'path': row['path'],
+                        'favorite': is_favorite  # <-- ДОБАВЛЕНО ЭТО ПОЛЕ
                     })
                 
                 if query in artist_name:

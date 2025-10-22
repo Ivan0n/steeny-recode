@@ -55,7 +55,7 @@
   </script>
 </head>
 
-<body class="bg-white text-black dark:bg-gray-900 dark:text-white flex flex-col min-h-screen text-[15px] theme-transition">
+<body class="flex flex-col min-h-screen text-[15px] theme-transition">
   <div class="flex flex-1">
     <aside class="w-60 border-r flex flex-col justify-between theme-transition" id="sidebar">
        <div>
@@ -111,9 +111,7 @@
            <h2 class="text-2xl font-bold mb-4">🎵 Вся музыка</h2>
            <div class="theme-card" >
              <div class="flex items-center justify-between mb-4">
-               <div class="flex items-center gap-2">
-                 <input type="text" placeholder="Фильтр..." class="px-3 py-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded text-sm theme-transition" oninput="filterTracks(this.value)">
-               </div>
+
                <a href="https://dalink.to/ivan0n" class="font-bold">Поддержать донатом</a>
              </div>
              <div class="track-list" id="allTracksList" style=" overflow-x: hidden;">
@@ -124,7 +122,7 @@
         <div id="section-search" class="hidden">
            <h2 class="text-2xl font-bold mb-4">🔍 Поиск</h2>
            <div class="flex gap-2 mb-4">
-             <input id="searchInput" type="text" placeholder="Искать трек или артиста..." class="flex-1 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white theme-transition">
+             <input id="searchInput" type="text" placeholder="Искать трек или артиста..." class="flex-1 rounded theme-transition form-input">
              <button onclick="searchMusic()" class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 theme-transition">Искать</button>
            </div>
            <div class="theme-card">

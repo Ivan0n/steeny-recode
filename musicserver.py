@@ -2,7 +2,11 @@ from flask import Flask, send_from_directory, abort
 import os
 
 app = Flask(__name__)
+import logging
 
+# Полностью отключаем логирование
+
+logging.getLogger('flask.app').disabled = True
 
 MUSIC_DIR = os.path.join(os.path.dirname(__file__), 'music')
 

@@ -4,8 +4,13 @@ import csv
 import os
 from werkzeug.utils import secure_filename
 
+
+
 app = Flask(__name__)
 app.secret_key = "steeny_key_5252525byby235672153"
+
+
+# Полностью отключаем логирование
 
 
 UPLOAD_FOLDER = 'uploads/avatars'

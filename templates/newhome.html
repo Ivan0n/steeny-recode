@@ -151,12 +151,6 @@
                   </div>
 
                   </div>
-
-                  
-
-                  
-
-                  <!-- === Вкладка: ТЕМЫ === -->
                   <div id="settings-themes" class="settings-tab hidden">
                     <div class="theme-card mb-6">
                       <h3 class="font-bold text-lg mb-3">Тема оформления</h3>
@@ -233,70 +227,8 @@
 
   <script type="module" src="{{ url_for('static', filename='music_player_js/homepage.js') }}"></script>
   <script type="module" src="{{ url_for('static', filename='music_player_js/media-session.js') }}"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const menuLinks = document.querySelectorAll('.menu-link');
-        const contentSections = document.querySelectorAll('#content > div[id^="section-"]');
-        const profileLink = document.getElementById('profileLink');
-
-        function showSection(sectionId) {
-            // Скрываем все секции
-            contentSections.forEach(section => {
-                section.classList.add('hidden');
-            });
-            // Показываем нужную
-            const activeSection = document.getElementById(`section-${sectionId}`);
-            if (activeSection) {
-                activeSection.classList.remove('hidden');
-            }
-            // Обновляем активную ссылку в меню
-            menuLinks.forEach(link => {
-                link.classList.toggle('active', link.dataset.section === sectionId);
-            });
-        }
-
-        // Клики по меню
-        menuLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const sectionId = link.dataset.section;
-                showSection(sectionId);
-            });
-        });
-
-        // Клик по профилю в шапке
-        if (profileLink) {
-            profileLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                showSection('profile');
-            });
-        }
-        
-        // По умолчанию показываем 'home'
-        showSection('home');
-    });
-  </script>
-  <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Переключение вкладок в настройках
-    const tabButtons = document.querySelectorAll('.settings-tab-btn');
-    const tabs = document.querySelectorAll('.settings-tab');
-
-    tabButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tabId = btn.dataset.tab;
-
-        // Активная кнопка
-        tabButtons.forEach(b => b.classList.toggle('active', b === btn));
-
-        // Показ нужного раздела
-        tabs.forEach(tab => {
-          tab.classList.toggle('hidden', tab.id !== 'settings-' + tabId);
-        });
-      });
-    });
-  });
-  </script>
+  <script src="{{ url_for('static', filename='profile.js') }}"></script>
+  <script src="{{ url_for('static', filename='profile.js') }}"></script>
 
 </body>
 </html>

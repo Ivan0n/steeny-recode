@@ -263,7 +263,7 @@ def playlist_data():
                     'id': row['id'],
                     'title': row['musicname'],
                     'artist': row['artist'],
-                    'src': f"http://185.143.238.53:5000/music/{row['artist']}/{row['musicname']}",
+                    'src': f"http://127.0.0.1:5000/music/{row['artist']}/{row['musicname']}",
                     'cover': row['img'],
                     'path': row['path']
                 })
@@ -390,7 +390,7 @@ def search_music():
                         'id': row['id'],
                         'title': row['musicname'],
                         'artist': row['artist'],
-                        'src': f"http://185.143.238.53:5000/music/{row['artist']}/{row['musicname']}",
+                        'src': f"http://127.0.0.1:5000/music/{row['artist']}/{row['musicname']}",
                         'cover': row['img'],
                         'path': row['path'],
                         'favorite': is_favorite  # <-- ДОБАВЛЕНО ЭТО ПОЛЕ
@@ -439,7 +439,7 @@ def get_all_favorites():
                         'id': row['id'],
                         'title': row['musicname'],
                         'artist': row['artist'],
-                        'src': f"http://185.143.238.53:5000/music/{row['artist']}/{row['musicname']}",
+                        'src': f"http://127.0.0.1:5000/music/{row['artist']}/{row['musicname']}",
                         'cover': row['img'],
                         'path': row['path'],
                         'favorite': True  # Очевидно, что это избранный трек

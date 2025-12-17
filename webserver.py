@@ -9,10 +9,7 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.secret_key = "steeny_key_5252525byby235672153"
 
-
-# Полностью отключаем логирование
-
-
+MUSICSERVER = "127.0.0.1:5000"
 UPLOAD_FOLDER = 'uploads/avatars'
 UPLOAD_FOLDER_BANNERS = 'uploads/banners'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -263,7 +260,7 @@ def playlist_data():
                     'id': row['id'],
                     'title': row['musicname'],
                     'artist': row['artist'],
-                    'src': f"http://127.0.0.1:5000/music/{row['artist']}/{row['musicname']}",
+                    'src': f"http://{MUSICSERVER}/music/{row['artist']}/{row['musicname']}",
                     'cover': row['img'],
                     'path': row['path']
                 })
@@ -390,7 +387,7 @@ def search_music():
                         'id': row['id'],
                         'title': row['musicname'],
                         'artist': row['artist'],
-                        'src': f"http://127.0.0.1:5000/music/{row['artist']}/{row['musicname']}",
+                        'src': f"http://{MUSICSERVER}/music/{row['artist']}/{row['musicname']}",
                         'cover': row['img'],
                         'path': row['path'],
                         'favorite': is_favorite  # <-- ДОБАВЛЕНО ЭТО ПОЛЕ
@@ -439,7 +436,7 @@ def get_all_favorites():
                         'id': row['id'],
                         'title': row['musicname'],
                         'artist': row['artist'],
-                        'src': f"http://127.0.0.1:5000/music/{row['artist']}/{row['musicname']}",
+                        'src': f"http://{MUSICSERVER}/music/{row['artist']}/{row['musicname']}",
                         'cover': row['img'],
                         'path': row['path'],
                         'favorite': True  # Очевидно, что это избранный трек

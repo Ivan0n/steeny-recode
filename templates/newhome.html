@@ -16,43 +16,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
   <link rel="icon" type="image/png" href="https://i.pinimg.com/736x/5a/d6/ef/5ad6ef496c7a7c342b9b0fdf2bce426a.jpg">
 
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const htmlEl = document.documentElement;
-    const themeCircles = document.querySelectorAll('.theme-circle');
-    const themes = ['light', 'dark', 'purple', 'green', 'blue', 'red'];
-
-    function setTheme(theme) {
-      // Удаляем все классы тем
-      themes.forEach(t => htmlEl.classList.remove(t));
-      
-      // Добавляем нужный класс (кроме light, он по умолчанию)
-      if (theme !== 'light') {
-        htmlEl.classList.add(theme);
-      }
-      
-      localStorage.setItem('theme', theme);
-
-      // Обновляем активный кружок
-      themeCircles.forEach(circle => {
-        if (circle.dataset.theme === theme) {
-          circle.classList.add('active');
-        } else {
-          circle.classList.remove('active');
-        }
-      });
-    }
-
-    // Загрузка сохранённой темы
-    const stored = localStorage.getItem('theme') || 'light';
-    setTheme(stored);
-
-    // Клики по кружкам
-    themeCircles.forEach(circle => {
-      circle.addEventListener('click', () => setTheme(circle.dataset.theme));
-    });
-  });
-  </script>
+  <script src="{{ url_for('static', filename='themeloader.js') }}"></script>
 </head>
 
 <body class="flex flex-col min-h-screen text-[15px] theme-transition">
@@ -68,7 +32,9 @@
          <nav id="menu" class="mt-6 flex flex-col gap-3 px-3 text-base">
            <div class="menu-link active" data-section="home"><i class="fa-solid fa-house w-5"></i> Главная</div>
            <div class="menu-link" data-section="search"><i class="fa-solid fa-magnifying-glass w-5"></i> Поиск</div>
+           <div class="menu-link" data-section="music"><i class="fa-solid fa-house w-5"></i> Музыка</div>
            <div class="menu-link" data-section="favorites"><i class="fa-solid fa-heart w-5"></i> Любимое</div>
+           <div class="menu-link" data-section="playlist"><i class="fa-solid fa-house w-5"></i> Плейлисты</div>
            <div class="menu-link" data-section="settings"><i class="fa-solid fa-gear w-5"></i> Настройки</div>
          </nav>
        </div>

@@ -1,18 +1,16 @@
-/* === THEME VARIABLES === */
+
 :root {
-  /* Акцентные цвета для разных тем */
   --accent-light: #111827;
   --accent-dark: #f9fafb;
   --accent-purple: #a855f7;
   --accent-green: #34d399;
   --accent-blue: #38bdf8;
-  --accent-red: #ef4444; /* Красный акцент */
+  --accent-red: #ef4444; 
   
-  /* Переменные для скроллбара (по умолчанию для светлой темы) */
   --scrollbar-thumb-color: var(--accent-light);
   --scrollbar-track-color: var(--border-light);
 
-  /* Базовые цвета */
+
   --bg-light: #ffffff; --text-light: #111827; --border-light: #e5e7eb; --card-bg-light: #ffffff;
   --bg-dark: #111827; --text-dark: #f9fafb; --border-dark: #374151; --card-bg-dark: #1f2937;
 }

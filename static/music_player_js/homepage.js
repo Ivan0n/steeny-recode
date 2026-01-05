@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const titleElem = document.getElementById('trackTitle');
     const artistElem = document.getElementById('trackArtist');
     const coverImg = document.getElementById('coverImg');
-    const favoritesList = document.getElementById('favoritesList');
     const favBtn = document.getElementById('favBtn');
     const trackCountElem = document.getElementById('trackCount');
 
@@ -35,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === Глобальные переменные ===
     let allTracks = [];
-    let recentTracks = []; // Отдельный массив для недавних
+    let recentTracks = [];
     let favoriteTracks = [];
     let searchResults = [];
     let currentPlaylist = [];
@@ -129,18 +128,12 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         card.addEventListener('click', () => {
-            // Находим индекс в allTracks для правильного воспроизведения
-            const allTracksIndex = allTracks.findIndex(t => t.id === track.id);
-            if (allTracksIndex !== -1) {
-                playFromSection('music', allTracksIndex);
-            } else {
-                // Если не нашли, играем из recentTracks
-                currentPlaylist = recentTracks;
-                currentSection = 'recent';
-                currentTrackIndex = index;
-                loadTrack(index);
-                playTrack();
-            }
+            // Играем из списка недавних
+            currentPlaylist = recentTracks;
+            currentSection = 'recent';
+            currentTrackIndex = index;
+            loadTrack(index);
+            playTrack();
         });
 
         return card;
@@ -193,29 +186,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === Загрузка треков ===
     
-    // Загрузка недавно добавленных треков
+    // Загрузка недавно добавленных треков (с сортировкой recent)
     async function loadRecentTracks() {
         if (recentLoaded) return;
         console.log('Загрузка недавних треков...');
 
         try {
-            // Запрашиваем треки с сортировкой по дате (новые первые)
             const res = await fetch('/playlist/data?offset=0&limit=10&sort=recent');
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             const data = await res.json();
 
-            if (data && !data.error) {
+            if (data && !data.error && Array.isArray(data)) {
                 recentTracks = data;
                 renderRecentTracks();
                 recentLoaded = true;
             }
         } catch (err) {
             console.error("Ошибка загрузки недавних треков:", err);
-            // Fallback: берём первые 10 из allTracks
-            if (allTracks.length > 0) {
-                recentTracks = allTracks.slice(0, 10);
-                renderRecentTracks();
-            }
         }
     }
 
@@ -228,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             const data = await res.json();
 
-            if (data && !data.error) {
+            if (data && !data.error && Array.isArray(data)) {
                 favoriteTracks = data;
                 renderFavorites();
                 favoritesLoaded = true;
@@ -246,17 +233,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch(`/playlist/data?offset=${trackOffset}&limit=${trackLimit}`);
             const data = await res.json();
 
-            if (!data.error && data.length > 0) {
+            if (!data.error && Array.isArray(data) && data.length > 0) {
                 const uniqueTracks = data.filter(newTrack => !allTracks.some(existing => existing.id === newTrack.id));
                 allTracks.push(...uniqueTracks);
                 renderAllTracks();
                 trackOffset += data.length;
-
-                // При первой загрузке обновляем недавние, если они не загружены отдельно
-                if (initial && !recentLoaded) {
-                    recentTracks = allTracks.slice(0, 10);
-                    renderRecentTracks();
-                }
             } else {
                 allLoaded = true;
                 if (trackCountElem) {
@@ -276,7 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
         isPlaying = true;
         updatePlayIcon();
         updateMediaPlaybackState(true);
-        if ('mediaSession' in navigator) { navigator.mediaSession.playbackState = 'playing'; }
     }
 
     function pauseTrack() {
@@ -284,7 +264,6 @@ document.addEventListener('DOMContentLoaded', () => {
         isPlaying = false;
         updatePlayIcon();
         updateMediaPlaybackState(false);
-        if ('mediaSession' in navigator) { navigator.mediaSession.playbackState = 'paused'; }
     }
 
     function togglePlayPause() {
@@ -300,8 +279,10 @@ document.addEventListener('DOMContentLoaded', () => {
         currentSection = section;
         switch (section) {
             case 'music':
-            case 'recent':
                 currentPlaylist = allTracks;
+                break;
+            case 'recent':
+                currentPlaylist = recentTracks;
                 break;
             case 'favorites':
                 currentPlaylist = favoriteTracks;
@@ -357,14 +338,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateActiveRows() {
         document.querySelectorAll('.track-row').forEach(row => row.classList.remove('active'));
+        document.querySelectorAll('.track-card').forEach(card => card.classList.remove('active'));
+        
         const currentTrack = currentPlaylist[currentTrackIndex];
         if (!currentTrack) return;
 
-        const activeRows = document.querySelectorAll(`.track-row[data-id="${currentTrack.id}"]`);
-        activeRows.forEach(row => {
-            if (row.dataset.section === currentSection) {
-                row.classList.add('active');
-            }
+        // Подсветка в списках
+        document.querySelectorAll(`.track-row[data-id="${currentTrack.id}"]`).forEach(row => {
+            row.classList.add('active');
+        });
+        
+        // Подсветка в карточках
+        document.querySelectorAll(`.track-card[data-id="${currentTrack.id}"]`).forEach(card => {
+            card.classList.add('active');
         });
     }
 
@@ -392,16 +378,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateUIAfterFavoriteToggle(track) {
-        const mainTrack = allTracks.find(t => t.id === track.id);
-        if (mainTrack) {
-            mainTrack.favorite = track.favorite;
-        }
-
-        // Обновляем и в recentTracks
-        const recentTrack = recentTracks.find(t => t.id === track.id);
-        if (recentTrack) {
-            recentTrack.favorite = track.favorite;
-        }
+        // Обновляем во всех массивах
+        [allTracks, recentTracks, searchResults].forEach(arr => {
+            const found = arr.find(t => t.id === track.id);
+            if (found) found.favorite = track.favorite;
+        });
 
         if (track.favorite) {
             if (!favoriteTracks.some(fav => fav.id === track.id)) {
@@ -411,7 +392,8 @@ document.addEventListener('DOMContentLoaded', () => {
             favoriteTracks = favoriteTracks.filter(fav => fav.id !== track.id);
         }
 
-        document.querySelectorAll(`.track-row[data-id="${track.id}"] .fa-star`).forEach(icon => {
+        // Обновляем иконки
+        document.querySelectorAll(`[data-id="${track.id}"] .fa-star`).forEach(icon => {
             icon.classList.toggle('text-yellow-500', track.favorite);
         });
 
@@ -446,11 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             const tracks = data.tracks || [];
 
-            searchResults = tracks.map(sr => {
-                const clientFavorite = favoriteTracks.some(fav => fav.id === sr.id) ||
-                    allTracks.find(t => t.id === sr.id)?.favorite;
-                return { ...sr, favorite: sr.favorite || !!clientFavorite };
-            });
+            searchResults = tracks;
             renderSearchResults();
         } catch (err) {
             console.error("Ошибка поиска:", err);
@@ -494,11 +472,13 @@ document.addEventListener('DOMContentLoaded', () => {
             currentTimeElem.textContent = formatTime(audio.currentTime);
 
             if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
-                navigator.mediaSession.setPositionState({
-                    duration: audio.duration,
-                    playbackRate: audio.playbackRate,
-                    position: audio.currentTime,
-                });
+                try {
+                    navigator.mediaSession.setPositionState({
+                        duration: audio.duration,
+                        playbackRate: audio.playbackRate,
+                        position: audio.currentTime,
+                    });
+                } catch(e) {}
             }
         }
     });
@@ -541,12 +521,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Обработчики кнопок скролла
+    // Обработчики кнопок скролла для карточек
     document.querySelectorAll('.scroll-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const direction = btn.dataset.direction;
             const container = btn.closest('.cards-scroll-container').querySelector('.track-cards');
-            const scrollAmount = 340; // Ширина 2 карточек + gap
+            const scrollAmount = 340;
             
             if (direction === 'left') {
                 container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
@@ -571,7 +551,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // === Инициализация ===
-    loadRecentTracks(); // Загружаем недавние для главной
+    loadRecentTracks();  // Загружаем недавние (с sort=recent)
     loadAllTracks(true); // Загружаем все треки
-    setupMediaSessionHandlers();
 });

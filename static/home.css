@@ -868,3 +868,227 @@ html.red .settings-section-title { border-bottom-color: #3f1818; }
   opacity: 0.6;
   font-size: 0.9rem;
 }
+
+/* === QUICK CARDS (Главная страница) === */
+.quick-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: var(--card-bg-light);
+  border: 1px solid var(--border-light);
+}
+
+.quick-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+html.dark .quick-card { background-color: var(--card-bg-dark); border-color: var(--border-dark); }
+html.dark .quick-card:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+html.purple .quick-card { background-color: #1f2335; border-color: #2e2f3d; }
+html.green .quick-card { background-color: #113435; border-color: #1c3e3f; }
+html.blue .quick-card { background-color: #172133; border-color: #1e293b; }
+html.red .quick-card { background-color: #371717; border-color: #3f1818; }
+
+.quick-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.quick-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.quick-card-content h3 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* === TRACK CARDS (Горизонтальный скролл) === */
+.cards-scroll-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.track-cards-wrapper {
+  overflow: hidden;
+  flex: 1;
+  margin: 0 8px;
+}
+
+.track-cards {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 8px 4px 16px 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.track-cards::-webkit-scrollbar {
+  display: none;
+}
+
+.track-card {
+  flex: 0 0 160px;
+  width: 160px;
+  background-color: var(--card-bg-light);
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-light);
+}
+
+.track-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.track-card.active {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3);
+}
+
+html.dark .track-card { background-color: var(--card-bg-dark); border-color: var(--border-dark); }
+html.dark .track-card:hover { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); }
+html.purple .track-card { background-color: #1f2335; border-color: #2e2f3d; }
+html.green .track-card { background-color: #113435; border-color: #1c3e3f; }
+html.blue .track-card { background-color: #172133; border-color: #1e293b; }
+html.red .track-card { background-color: #371717; border-color: #3f1818; }
+
+.track-card-cover {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.track-card-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.track-card-artist {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-card-play {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+}
+
+.track-card:hover .track-card-play {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.track-card-cover-wrapper {
+  position: relative;
+}
+
+/* Кнопки скролла */
+.scroll-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-light);
+  background-color: var(--card-bg-light);
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+.scroll-btn:hover {
+  background-color: #e5e7eb;
+  transform: scale(1.05);
+}
+
+html.dark .scroll-btn { background-color: var(--card-bg-dark); border-color: var(--border-dark); color: var(--text-dark); }
+html.dark .scroll-btn:hover { background-color: #374151; }
+html.purple .scroll-btn { background-color: #1f2335; border-color: #2e2f3d; color: #a9b1d6; }
+html.green .scroll-btn { background-color: #113435; border-color: #1c3e3f; color: #c2d9d9; }
+html.blue .scroll-btn { background-color: #172133; border-color: #1e293b; color: #cbd5e1; }
+html.red .scroll-btn { background-color: #371717; border-color: #3f1818; color: #fecaca; }
+
+.track-cards-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 2rem;
+  opacity: 0.6;
+  font-size: 0.9rem;
+}
+
+/* === SETTINGS SECTION === */
+.settings-section {
+  background-color: var(--card-bg-light);
+  border: 1px solid var(--border-light);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+html.dark .settings-section { background-color: var(--card-bg-dark); border-color: var(--border-dark); }
+html.purple .settings-section { background-color: #1f2335; border-color: #2e2f3d; }
+html.green .settings-section { background-color: #113435; border-color: #1c3e3f; }
+html.blue .settings-section { background-color: #172133; border-color: #1e293b; }
+html.red .settings-section { background-color: #371717; border-color: #3f1818; }
+
+.settings-section-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+html.dark .settings-section-title { border-bottom-color: var(--border-dark); }
+html.purple .settings-section-title { border-bottom-color: #2e2f3d; }
+html.green .settings-section-title { border-bottom-color: #1c3e3f; }
+html.blue .settings-section-title { border-bottom-color: #1e293b; }
+html.red .settings-section-title { border-bottom-color: #3f1818; }

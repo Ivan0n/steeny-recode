@@ -33,7 +33,7 @@ def run_music():
 def run_web():
     consolelog("I'm trying to launch a web server")
     try:
-        webserver.app.run(host='0.0.0.0', port=2020, debug=False, use_reloader=False)
+        webserver.app.run(host='0.0.0.0', port=2020, debug=True, use_reloader=False)
         print(f"[{time}] <STEENY> - OK")
     except:
         consolelog("Error in starting the web server -_-")

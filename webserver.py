@@ -2,9 +2,9 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import secrets
 import csv
 import os
+import random
 from werkzeug.utils import secure_filename
-
-
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = "steeny_key_5252525byby235672153"
@@ -20,8 +20,6 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
 
 def load_users():
     users = {}
@@ -41,10 +39,8 @@ def load_users():
         print("⚠️ Файл base/user/auth.csv не найден!")
     return users
 
-
 def save_users():
     os.makedirs(os.path.dirname("base/user/auth.csv"), exist_ok=True)
-    
     with open("base/user/auth.csv", "w", newline="", encoding="utf-8-sig") as f:
         fieldnames = ['email', 'password', 'name', 'avatar', 'banner']
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -53,17 +49,100 @@ def save_users():
             row = {'email': email, **data}
             writer.writerow(row)
 
+def get_user_favorites(user):
+    """Получить set ID избранных треков пользователя"""
+    favorites = set()
+    try:
+        with open('base/user/favorites.csv', 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row['user'] == user:
+                    favorites.add(row['id'])
+    except FileNotFoundError:
+        pass
+    return favorites
+
+def get_all_tracks():
+    """Получить все треки из базы"""
+    tracks = []
+    try:
+        with open('base/music/music.csv', 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                tracks.append(row)
+    except FileNotFoundError:
+        pass
+    return tracks
+
+def format_track(row, favorites):
+    """Форматировать трек для JSON ответа"""
+    return {
+        'id': row['id'],
+        'title': row['musicname'],
+        'artist': row['artist'],
+        'src': f"http://{MUSICSERVER}/music/{row['artist']}/{row['musicname']}",
+        'cover': row['img'],
+        'path': row['path'],
+        'favorite': row['id'] in favorites
+    }
+
+def add_to_history(user, track_id):
+    """Добавить трек в историю прослушивания"""
+    history_file = 'base/user/history.csv'
+    os.makedirs(os.path.dirname(history_file), exist_ok=True)
+    
+    # Читаем текущую историю
+    history = []
+    try:
+        with open(history_file, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                history.append(row)
+    except FileNotFoundError:
+        pass
+    
+    # Удаляем старую запись этого трека для этого пользователя (если есть)
+    history = [h for h in history if not (h['user'] == user and h['track_id'] == track_id)]
+    
+    # Добавляем новую запись
+    history.append({
+        'user': user,
+        'track_id': track_id,
+        'played_at': datetime.now().isoformat()
+    })
+    
+    # Записываем обратно
+    with open(history_file, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=['user', 'track_id', 'played_at'])
+        writer.writeheader()
+        writer.writerows(history)
+
+def get_user_history(user, limit=20):
+    """Получить историю прослушивания пользователя"""
+    history = []
+    try:
+        with open('base/user/history.csv', 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row['user'] == user:
+                    history.append(row)
+    except FileNotFoundError:
+        pass
+    
+    # Сортируем по дате (новые первые) и берём limit
+    history.sort(key=lambda x: x.get('played_at', ''), reverse=True)
+    return history[:limit]
 
 USERS = load_users()
 TOKENS = {}
 
+# === Авторизация ===
 @app.route("/", methods=["GET", "POST"])
 def login():
     error = None
     if request.method == "POST":
         email = (request.form.get("email") or "").strip()
         password = (request.form.get("password") or "").strip()
-
 
         if email in USERS and password == USERS[email]["password"]:
             token = secrets.token_hex(16)
@@ -83,7 +162,6 @@ def secret():
 
     if not user_email or TOKENS.get(user_email) != token:
         return redirect(url_for("login"))
-    
 
     user_data = USERS.get(user_email, {})
     
@@ -95,54 +173,24 @@ def secret():
         banner=user_data.get("banner", "")
     )
 
+@app.route("/logout")
+def logout():
+    user = session.get("user")
+    if user in TOKENS:
+        TOKENS.pop(user)
+    session.clear()
+    return redirect(url_for("login"))
 
+# === Загрузка файлов ===
 @app.route('/uploads/banners/<filename>')
 def uploaded_banner(filename):
-    """Отдаёт загруженные баннеры профиля."""
     return send_from_directory(app.config['UPLOAD_FOLDER_BANNERS'], filename)
-
-
-@app.route('/profile/update/banner', methods=['POST'])
-def update_banner():
-    user_email = session.get("user")
-    if not user_email or TOKENS.get(user_email) != session.get("token"):
-        return redirect(url_for("login"))
-        
-    if 'banner' not in request.files:
-        flash('Файл баннера не был отправлен.', 'error')
-        return redirect(url_for('secret'))
-        
-    file = request.files['banner']
-    
-    if file.filename == '':
-        flash('Файл баннера не выбран.', 'error')
-        return redirect(url_for('secret'))
-        
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        unique_filename = f"{user_email.split('@')[0]}_{secrets.token_hex(4)}_{filename}"
-        
-        os.makedirs(app.config['UPLOAD_FOLDER_BANNERS'], exist_ok=True)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER_BANNERS'], unique_filename)
-        file.save(file_path)
-        
-        banner_url = url_for('uploaded_banner', filename=unique_filename)
-        
-        USERS[user_email]['banner'] = banner_url
-        save_users()
-        flash('Баннер успешно обновлён!', 'success')
-    else:
-        flash('Недопустимый формат баннера. Разрешены: png, jpg, jpeg, gif.', 'error')
-
-    return redirect(url_for('secret'))
-
-
 
 @app.route('/uploads/avatars/<filename>')
 def uploaded_file(filename):
-    """Отдаёт загруженные файлы аватарок."""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+# === Обновление профиля ===
 @app.route('/profile/update/name', methods=['POST'])
 def update_name():
     user_email = session.get("user")
@@ -158,7 +206,6 @@ def update_name():
         flash("Имя должно быть длиннее 2 символов.", "error")
         
     return redirect(url_for('secret'))
-
 
 @app.route('/profile/update/password', methods=['POST'])
 def update_password():
@@ -200,14 +247,14 @@ def update_avatar():
         return redirect(url_for('secret'))
         
     if file and allowed_file(file.filename):
-
         filename = secure_filename(file.filename)
         unique_filename = f"{user_email.split('@')[0]}_{secrets.token_hex(4)}_{filename}"
+        
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
         
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
         file.save(file_path)
         
-
         avatar_url = url_for('uploaded_file', filename=unique_filename)
         
         USERS[user_email]['avatar'] = avatar_url
@@ -218,29 +265,41 @@ def update_avatar():
 
     return redirect(url_for('secret'))
 
-
-@app.route("/logout")
-def logout():
-    user = session.get("user")
-    if user in TOKENS:
-        TOKENS.pop(user)
-    session.clear()
-    return redirect(url_for("login"))
-
-
-@app.route("/avatar/<username>")
-def avatar(username):
-    if username not in USERS:
-        return jsonify({"error": "Пользователь не найден"}), 404
+@app.route('/profile/update/banner', methods=['POST'])
+def update_banner():
+    user_email = session.get("user")
+    if not user_email or TOKENS.get(user_email) != session.get("token"):
+        return redirect(url_for("login"))
+        
+    if 'banner' not in request.files:
+        flash('Файл баннера не был отправлен.', 'error')
+        return redirect(url_for('secret'))
+        
+    file = request.files['banner']
     
-    avatar_url = USERS[username].get("avatar", "")
-    if not avatar_url:
-        return jsonify({"error": "Аватар не найден"}), 404
-    if avatar_url.startswith('http'):
-        return redirect(avatar_url)
-    return redirect(avatar_url)
+    if file.filename == '':
+        flash('Файл баннера не выбран.', 'error')
+        return redirect(url_for('secret'))
+        
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        unique_filename = f"{user_email.split('@')[0]}_{secrets.token_hex(4)}_{filename}"
+        
+        os.makedirs(app.config['UPLOAD_FOLDER_BANNERS'], exist_ok=True)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER_BANNERS'], unique_filename)
+        file.save(file_path)
+        
+        banner_url = url_for('uploaded_banner', filename=unique_filename)
+        
+        USERS[user_email]['banner'] = banner_url
+        save_users()
+        flash('Баннер успешно обновлён!', 'success')
+    else:
+        flash('Недопустимый формат баннера. Разрешены: png, jpg, jpeg, gif.', 'error')
 
+    return redirect(url_for('secret'))
 
+# === API для музыки ===
 @app.route("/playlist/data")
 def playlist_data():
     user = session.get("user")
@@ -250,9 +309,8 @@ def playlist_data():
 
     offset = int(request.args.get("offset", 0))
     limit = int(request.args.get("limit", 20))
-    sort = request.args.get("sort", "default")  # НОВЫЙ ПАРАМЕТР
+    sort = request.args.get("sort", "default")
 
-    # Сначала загружаем избранное пользователя
     favorites = set()
     try:
         with open('base/user/favorites.csv', 'r', encoding='utf-8') as f:
@@ -268,10 +326,11 @@ def playlist_data():
         with open('base/music/music.csv', 'r', encoding='utf-8') as f:
             rows = list(csv.DictReader(f))
             
-            # Если запрошена сортировка по недавним - переворачиваем список
-            # (последние добавленные в CSV будут первыми)
             if sort == "recent":
-                rows = rows[::-1]  # Реверс списка
+                rows = rows[::-1]
+            elif sort == "random":
+                import random
+                random.shuffle(rows)
             
             slice_data = rows[offset:offset+limit]
             
@@ -284,13 +343,95 @@ def playlist_data():
                     'src': f"http://{MUSICSERVER}/music/{row['artist']}/{row['musicname']}",
                     'cover': row['img'],
                     'path': row['path'],
-                    'favorite': track_id in favorites  # Сразу добавляем статус
+                    'favorite': track_id in favorites
                 })
     except FileNotFoundError:
         return jsonify({"error": "Файл музыки не найден"}), 404
 
     return jsonify(music_data)
 
+@app.route("/playlist/random")
+def playlist_random():
+    """Случайные треки"""
+    user = session.get("user")
+    token = session.get("token")
+    if not user or TOKENS.get(user) != token:
+        return jsonify({"error": "Не авторизован"}), 401
+
+    limit = int(request.args.get("limit", 10))
+    favorites = get_user_favorites(user)
+    all_tracks = get_all_tracks()
+    
+    # Выбираем случайные треки
+    random_tracks = random.sample(all_tracks, min(limit, len(all_tracks)))
+    music_data = [format_track(row, favorites) for row in random_tracks]
+
+    return jsonify(music_data)
+
+@app.route("/playlist/history")
+def playlist_history():
+    """Недавно прослушанные треки"""
+    user = session.get("user")
+    token = session.get("token")
+    if not user or TOKENS.get(user) != token:
+        return jsonify({"error": "Не авторизован"}), 401
+
+    limit = int(request.args.get("limit", 10))
+    favorites = get_user_favorites(user)
+    
+    # Получаем историю
+    history = get_user_history(user, limit)
+    track_ids = [h['track_id'] for h in history]
+    
+    # Получаем данные о треках
+    all_tracks = get_all_tracks()
+    tracks_dict = {t['id']: t for t in all_tracks}
+    
+    music_data = []
+    for track_id in track_ids:
+        if track_id in tracks_dict:
+            music_data.append(format_track(tracks_dict[track_id], favorites))
+
+    return jsonify(music_data)
+
+@app.route("/playlist/track-played", methods=["POST"])
+def track_played():
+    """Записать прослушивание трека"""
+    user = session.get("user")
+    token = session.get("token")
+    if not user or TOKENS.get(user) != token:
+        return jsonify({"error": "Не авторизован"}), 401
+    
+    data = request.get_json()
+    track_id = data.get('id')
+    
+    if track_id:
+        add_to_history(user, track_id)
+        return jsonify({"success": True})
+    
+    return jsonify({"error": "ID трека обязателен"}), 400
+
+@app.route("/playlist/favorites")
+def get_all_favorites():
+    """Все любимые треки"""
+    user = session.get("user")
+    token = session.get("token")
+    if not user or TOKENS.get(user) != token:
+        return jsonify({"error": "Не авторизован"}), 401
+
+    favorite_ids = get_user_favorites(user)
+
+    if not favorite_ids:
+        return jsonify([])
+
+    all_tracks = get_all_tracks()
+    favorite_tracks = []
+    
+    for row in all_tracks:
+        if row['id'] in favorite_ids:
+            favorite_tracks.append(format_track(row, favorite_ids))
+
+    return jsonify(favorite_tracks)
 
 @app.route("/playlist/add", methods=["POST"])
 def add_to_favorites():
@@ -305,22 +446,19 @@ def add_to_favorites():
     if not track_id:
         return jsonify({"error": "ID трека обязателен"}), 400
 
-    # Проверяем, не добавлен ли уже
-    try:
-        with open('base/user/favorites.csv', 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row['user'] == user and row['id'] == track_id:
-                    return jsonify({"success": True, "message": "Уже в избранном"})
-    except FileNotFoundError:
-        pass
+    favorites = get_user_favorites(user)
+    if track_id in favorites:
+        return jsonify({"success": True, "message": "Уже в избранном"})
 
+    favorites_file = 'base/user/favorites.csv'
+    os.makedirs(os.path.dirname(favorites_file), exist_ok=True)
+    
     try:
-        with open('base/user/favorites.csv', 'a', newline='', encoding='utf-8') as f:
+        with open(favorites_file, 'a', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow([user, track_id])
     except FileNotFoundError:
-        with open('base/user/favorites.csv', 'w', newline='', encoding='utf-8') as f:
+        with open(favorites_file, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(['user', 'id'])
             writer.writerow([user, track_id])
@@ -358,7 +496,6 @@ def remove_from_favorites():
     
     return jsonify({"success": True})
 
-
 @app.route("/search")
 def search_music():
     user = session.get("user")
@@ -371,89 +508,35 @@ def search_music():
     if not query:
         return jsonify({'tracks': [], 'artists': []})
     
-    favorites = set()
-    try:
-        with open('base/user/favorites.csv', 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row['user'] == user:
-                    favorites.add(row['id'])
-    except FileNotFoundError:
-        pass
+    favorites = get_user_favorites(user)
+    all_tracks = get_all_tracks()
 
     found_tracks = []
-    found_artists = set() 
+    found_artists = set()
     
-    try:
-        with open('base/music/music.csv', 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                track_title = row.get('musicname', '').lower()
-                artist_name = row.get('artist', '').lower()
+    for row in all_tracks:
+        track_title = row.get('musicname', '').lower()
+        artist_name = row.get('artist', '').lower()
 
-                if query in track_title or query in artist_name:
-                    is_favorite = row['id'] in favorites
+        if query in track_title or query in artist_name:
+            found_tracks.append(format_track(row, favorites))
+        
+        if query in artist_name:
+            found_artists.add((row['artist'], row['img']))
 
-                    found_tracks.append({
-                        'id': row['id'],
-                        'title': row['musicname'],
-                        'artist': row['artist'],
-                        'src': f"http://{MUSICSERVER}/music/{row['artist']}/{row['musicname']}",
-                        'cover': row['img'],
-                        'path': row['path'],
-                        'favorite': is_favorite
-                    })
-                
-                if query in artist_name:
-                    found_artists.add((row['artist'], row['img']))
-
-    except FileNotFoundError:
-        pass
-    
     artists_list = [{'name': name, 'cover': cover} for name, cover in found_artists]
 
     return jsonify({'tracks': found_tracks, 'artists': artists_list})
 
-
-@app.route("/playlist/favorites")
-def get_all_favorites():
-    """Отдаёт полный список любимых треков пользователя."""
-    user = session.get("user")
-    token = session.get("token")
-    if not user or TOKENS.get(user) != token:
-        return jsonify({"error": "Не авторизован"}), 401
-
-    favorite_ids = set()
-    try:
-        with open('base/user/favorites.csv', 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row['user'] == user:
-                    favorite_ids.add(row['id'])
-    except FileNotFoundError:
-        return jsonify([])
-
-    if not favorite_ids:
-        return jsonify([])
-
-    favorite_tracks = []
-    try:
-        with open('base/music/music.csv', 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row['id'] in favorite_ids:
-                    favorite_tracks.append({
-                        'id': row['id'],
-                        'title': row['musicname'],
-                        'artist': row['artist'],
-                        'src': f"http://{MUSICSERVER}/music/{row['artist']}/{row['musicname']}",
-                        'cover': row['img'],
-                        'path': row['path'],
-                        'favorite': True
-                    })
-    except FileNotFoundError:
-        return jsonify({"error": "Файл музыки не найден"}), 404
-
-    return jsonify(favorite_tracks)
-
+@app.route("/avatar/<username>")
+def avatar(username):
+    if username not in USERS:
+        return jsonify({"error": "Пользователь не найден"}), 404
+    
+    avatar_url = USERS[username].get("avatar", "")
+    if not avatar_url:
+        return jsonify({"error": "Аватар не найден"}), 404
+    if avatar_url.startswith('http'):
+        return redirect(avatar_url)
+    return redirect(avatar_url)
 

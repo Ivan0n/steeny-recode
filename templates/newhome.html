@@ -4,340 +4,319 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MusicStream — Steeny</title>
-
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { darkMode: 'class' };
-  </script>
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
   <link rel="icon" type="image/png" href="https://i.pinimg.com/736x/5a/d6/ef/5ad6ef496c7a7c342b9b0fdf2bce426a.jpg">
-
   <script src="{{ url_for('static', filename='themeloader.js') }}"></script>
 </head>
 
-<body class="flex flex-col min-h-screen text-[15px] theme-transition">
-  <div class="flex flex-1">
-    <aside class="w-60 border-r flex flex-col justify-between theme-transition" id="sidebar">
-       <div>
-         <div class="flex items-center gap-3 p-5 border-b border-gray-200 dark:border-gray-700 theme-transition">
-           <div class="w-10 h-10 rounded flex items-center justify-center font-bold text-lg overflow-hidden">
-             <img src="https://i.pinimg.com/736x/5a/d6/ef/5ad6ef496c7a7c342b9b0fdf2bce426a.jpg" alt="" class="w-full h-full object-cover">
-           </div>
-           <span class="font-bold text-lg">Steeny</span>
-         </div>
-         <nav id="menu" class="mt-6 flex flex-col gap-3 px-3 text-base">
-
-            <div class="menu-link active" data-section="home">
-              <i class="fa-solid fa-house w-5"></i> Главная
-            </div>
-
-            <div class="menu-link" data-section="search">
-              <i class="fa-solid fa-magnifying-glass w-5"></i> Поиск
-            </div>
-
-            <div class="menu-link" data-section="music">
-              <i class="fa-solid fa-music w-5"></i> Музыка
-            </div>
-
-            <div class="menu-link" data-section="favorites">
-              <i class="fa-solid fa-heart w-5"></i> Любимое
-            </div>
-
-            <div class="menu-link" data-section="playlist">
-              <i class="fa-solid fa-list w-5"></i> Плейлисты
-            </div>
-
-            <div class="menu-link" data-section="settings">
-              <i class="fa-solid fa-gear w-5"></i> Настройки
-            </div>
-
-          </nav>
-       </div>
-    </aside>
-
-    <main class="flex-1 flex flex-col theme-transition" style="padding-left: 240px;">
-      <header class="flex justify-end items-center p-5 border-b border-gray-200 dark:border-gray-700 theme-transition">
-        <a href="#" id="profileLink" class="flex items-center gap-4 cursor-pointer group">
-          <span class="nameuser mr-4">{{ name }}</span>
-          <img src="{{ avatar }}" class="w-10 h-10 rounded-full" alt="avatar">
-        </a>
-      </header>
-
-      <div id="content" class="flex-1 overflow-y-auto p-8 theme-transition">
-        
-        <!-- СЕКЦИЯ: Профиль -->
-        <div id="section-profile" class="hidden">
-          <div class="profile-header" style="background-image: url('{{ banner }}');">
-            <div class="profile-overlay"></div>
-            <div class="profile-info">
-              <img src="{{ avatar }}" alt="User Avatar" class="profile-avatar fade-in">
-              <div class="profile-text fade-up">
-                <h1 class="profile-name">{{ name }}</h1>
-                <p class="profile-id">ID: {{ user }}</p>
-              </div>
-            </div>
-          </div>
-          <div class="profile-content fade-up-delayed">
-            <button class="menu-link inline-flex" data-section="settings">
-              <i class="fa-solid fa-pencil"></i>
-              Редактировать профиль
-            </button>
-          </div>
-        </div>
-
-        <!-- СЕКЦИЯ: Главная -->
-        <div id="section-home">
-          <h2 class="text-2xl font-bold mb-6">👋 Привет, {{ name }}!</h2>
-          
-          <!-- Быстрые действия -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-            
-            <div class="quick-card" data-section="music">
-              <div class="quick-card-icon bg-gradient-to-br from-purple-500 to-pink-500">
-                <i class="fa-solid fa-music"></i>
-              </div>
-              <div class="quick-card-content">
-                <h3 class="font-bold">Вся музыка</h3>
-                <p class="text-sm opacity-70">Слушай все треки</p>
-              </div>
-              <i class="fa-solid fa-chevron-right opacity-40"></i>
-            </div>
-
-            <div class="quick-card" data-section="favorites">
-              <div class="quick-card-icon bg-gradient-to-br from-red-500 to-orange-500">
-                <i class="fa-solid fa-heart"></i>
-              </div>
-              <div class="quick-card-content">
-                <h3 class="font-bold">Любимое</h3>
-                <p class="text-sm opacity-70">Твои избранные треки</p>
-              </div>
-              <i class="fa-solid fa-chevron-right opacity-40"></i>
-            </div>
-
-            <div class="quick-card" data-section="search">
-              <div class="quick-card-icon bg-gradient-to-br from-blue-500 to-cyan-500">
-                <i class="fa-solid fa-magnifying-glass"></i>
-              </div>
-              <div class="quick-card-content">
-                <h3 class="font-bold">Поиск</h3>
-                <p class="text-sm opacity-70">Найди что-то новое</p>
-              </div>
-              <i class="fa-solid fa-chevron-right opacity-40"></i>
-            </div>
-
-          </div>
-
-          <!-- Недавно добавленные (горизонтальный скролл) -->
-          <div class="mb-8">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="font-bold text-lg">🆕 Недавно добавленные</h3>
-              <button class="text-sm link" data-section="music">Показать все →</button>
-            </div>
-            <div class="cards-scroll-container">
-              <button class="scroll-btn scroll-btn-left" data-direction="left">
-                <i class="fa-solid fa-chevron-left"></i>
-              </button>
-              <div class="track-cards-wrapper" id="recentTracksWrapper">
-                <div class="track-cards" id="recentTracksList">
-                  <!-- Карточки треков будут здесь -->
-                </div>
-              </div>
-              <button class="scroll-btn scroll-btn-right" data-direction="right">
-                <i class="fa-solid fa-chevron-right"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- Поддержка -->
-          <div class="theme-card">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white text-xl">
-                <i class="fa-solid fa-heart"></i>
-              </div>
-              <div class="flex-1">
-                <h3 class="font-bold">Поддержать проект</h3>
-                <p class="text-sm opacity-70">Помоги развитию Steeny</p>
-              </div>
-              <a href="https://dalink.to/ivan0n" target="_blank" class="form-button">
-                <i class="fa-solid fa-gift mr-2"></i>Донат
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <!-- СЕКЦИЯ: Поиск -->
-        <div id="section-search" class="hidden">
-          <h2 class="text-2xl font-bold mb-4">🔍 Поиск</h2>
-          <div class="flex gap-2 mb-4">
-            <input id="searchInput" type="text" placeholder="Искать трек или артиста..." class="flex-1 rounded theme-transition form-input">
-            <button onclick="searchMusic()" class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 theme-transition">Искать</button>
-          </div>
-          <div class="theme-card">
-            <div id="searchResults" class="track-list" style="overflow-x: hidden;"></div>
-          </div>
-        </div>
-
-        <!-- СЕКЦИЯ: Музыка -->
-        <div id="section-music" class="hidden">
-          <h2 class="text-2xl font-bold mb-4">🎶 Вся музыка</h2>
-          <div class="theme-card">
-            <div class="flex items-center justify-between mb-4">
-              <p class="text-sm opacity-70" id="trackCount">Загрузка...</p>
-            </div>
-            <div class="track-list" id="allTracksList" style="overflow-x: hidden;"></div>
-          </div>
-        </div>
-
-        <!-- СЕКЦИЯ: Любимое -->
-        <div id="section-favorites" class="hidden">
-          <h2 class="text-2xl font-bold mb-4">❤️ Любимые треки</h2>
-          <div class="theme-card">
-            <div class="track-list" id="favoritesList" style="overflow-x: hidden;"></div>
-          </div>
-        </div>
-
-        <!-- СЕКЦИЯ: Плейлисты -->
-        <div id="section-playlist" class="hidden">
-          <h2 class="text-2xl font-bold mb-4">📁 Плейлисты</h2>
-          <div class="theme-card">
-            <p class="p-4 text-center opacity-60">У вас пока нет плейлистов</p>
-            <button class="form-button mt-2">
-              <i class="fa-solid fa-plus mr-2"></i>Создать плейлист
-            </button>
-          </div>
-        </div>
-
-        <!-- СЕКЦИЯ: Настройки (ИСПРАВЛЕНО) -->
-        <div id="section-settings" class="hidden">
-          <h2 class="text-2xl font-bold mb-4">⚙️ Настройки</h2>
-          
-          <!-- Вкладки -->
-          <div class="flex gap-3 mb-6">
-            <button class="settings-tab-btn active" data-tab="profile">Профиль</button>
-            <button class="settings-tab-btn" data-tab="themes">Темы</button>
-          </div>
-          
-          <!-- Вкладка: Профиль -->
-          <div id="settings-profile" class="settings-tab">
-            <div class="settings-section">
-              <h3 class="settings-section-title">Редактировать профиль</h3>
-              <form action="{{ url_for('update_name') }}" method="POST" class="settings-form">
-                <label for="settings-name">Ваше имя</label>
-                <input type="text" id="settings-name" name="name" value="{{ name }}" required class="form-input">
-                <button type="submit" class="form-button">Сохранить имя</button>
-              </form>
-            </div>
-            
-            <div class="settings-section">
-              <h3 class="settings-section-title">Сменить аватар</h3>
-              <form action="{{ url_for('update_avatar') }}" method="POST" enctype="multipart/form-data" class="settings-form">
-                <label for="settings-avatar">Новый аватар (jpg, png, gif)</label>
-                <input type="file" id="settings-avatar" name="avatar" accept="image/*" required class="form-input file">
-                <button type="submit" class="form-button">Загрузить аватар</button>
-              </form>
-            </div>
-            
-            <div class="settings-section">
-              <h3 class="settings-section-title">Сменить баннер профиля</h3>
-              <form action="{{ url_for('update_banner') }}" method="POST" enctype="multipart/form-data" class="settings-form">
-                <label for="settings-banner">Новый баннер (jpg, png, gif)</label>
-                <input type="file" id="settings-banner" name="banner" accept="image/*" required class="form-input file">
-                <button type="submit" class="form-button">Загрузить баннер</button>
-              </form>
-            </div>
-            
-            <div class="settings-section">
-              <h3 class="settings-section-title">Сменить пароль</h3>
-              <form action="{{ url_for('update_password') }}" method="POST" class="settings-form">
-                <label for="settings-old-password">Старый пароль</label>
-                <input type="password" id="settings-old-password" name="old_password" required class="form-input">
-                <label for="settings-new-password">Новый пароль</label>
-                <input type="password" id="settings-new-password" name="new_password" required class="form-input">
-                <button type="submit" class="form-button">Сменить пароль</button>
-              </form>
-            </div>
-          </div>
-
-          <!-- Вкладка: Темы -->
-          <div id="settings-themes" class="settings-tab hidden">
-            <div class="settings-section">
-              <h3 class="settings-section-title">Тема оформления</h3>
-              <p class="text-sm opacity-70 mb-4">Выберите цветовую схему интерфейса</p>
-              <div class="flex items-center gap-4 flex-wrap">
-                <div class="theme-circle" data-theme="light" title="Светлая" style="background-color: #f3f4f6; border: 1px solid #d1d5db;"></div>
-                <div class="theme-circle" data-theme="dark" title="Тёмная" style="background-color: #1f2937;"></div>
-                <div class="theme-circle" data-theme="purple" title="Фиолетовая" style="background-color: #7e22ce;"></div>
-                <div class="theme-circle" data-theme="green" title="Зелёная" style="background-color: #10b981;"></div>
-                <div class="theme-circle" data-theme="blue" title="Синяя" style="background-color: #3b82f6;"></div>
-                <div class="theme-circle" data-theme="red" title="Красная" style="background-color: #ef4444;"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Выход из аккаунта -->
-          <div class="settings-section mt-8">
-            <a href="/logout" class="text-red-500 hover:underline inline-flex items-center gap-2">
-              <i class="fa-solid fa-right-from-bracket"></i> Выйти из аккаунта
-            </a>
-          </div>
-        </div>
-
-      </div>
-    </main>
-  </div>
-
-  <footer class="player border-t p-4 fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 theme-transition">
-    <div class="fullscreen-visuals">
-        <button id="fullscreenCloseBtn" class="fullscreen-close-btn"><i class="fa-solid fa-compress"></i></button>
-        <img id="fullscreenCoverImg" src="https://via.placeholder.com/300" class="fullscreen-cover" alt="cover">
-        <div class="fullscreen-info">
-            <div id="fullscreenTrackTitle" class="font-bold text-2xl">Название трека</div>
-            <div id="fullscreenTrackArtist" class="text-lg opacity-80">Артист</div>
-        </div>
-    </div>
-    
-    <div class="player-content">
-      <div class="mb-2">
-        <input type="range" id="seekbar" class="seekbar" value="0" max="100">
-        <div class="flex justify-between w-full text-xs text-gray-500 dark:text-gray-400 theme-transition">
-          <span id="currentTime">0:00</span>
-          <span id="duration">0:00</span>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-between">
-        <div class="left-meta">
-          <img id="coverImg" src="https://via.placeholder.com/64" class="w-14 h-14 rounded" alt="cover">
-          <div>
-            <div id="trackTitle" class="font-semibold text-sm">Название трека</div>
-            <div id="trackArtist" class="text-xs text-gray-500 dark:text-gray-400 theme-transition">Артист</div>
-          </div>
-          <button id="favBtn" class="ml-3 text-2xl text-gray-400 hover:text-yellow-500"><i class="fa-solid fa-star"></i></button>
-        </div>
-
-        <div class="controls-center">
-          <button id="prevBtn" class="player-btn"><i class="fa-solid fa-backward-step"></i></button>
-          <button id="playBtn" class="player-btn play"><i id="playIcon" class="fa-solid fa-play"></i></button>
-          <button id="nextBtn" class="player-btn"><i class="fa-solid fa-forward-step"></i></button>
-          <button id="repeatBtn" class="player-btn"><i id="repeatIcon" class="fa-solid fa-repeat"></i></button>
-        </div>
-
-        <div class="right-volume">
-          <i id="volumeIcon" class="fa-solid fa-volume-high"></i>
-          <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="1">
-          <button id="fullscreenBtn" class="player-btn small-btn ml-2"><i class="fa-solid fa-expand"></i></button>
-        </div>
+<body class="player-hidden">
+    <aside id="sidebar">
+    <div class="p-5 border-b" style="border-color: var(--border-color);">
+      <div class="flex items-center gap-3">
+        <img src="https://i.pinimg.com/736x/5a/d6/ef/5ad6ef496c7a7c342b9b0fdf2bce426a.jpg" class="w-10 h-10 rounded">
+        <span class="font-bold text-lg">Steeny</span>
       </div>
     </div>
-    
+    <nav>
+      <div class="menu-link active" data-section="home"><i class="fa-solid fa-house w-5"></i> Главная</div>
+      <div class="menu-link" data-section="search"><i class="fa-solid fa-magnifying-glass w-5"></i> Поиск</div>
+      <div class="menu-link" data-section="music"><i class="fa-solid fa-music w-5"></i> Музыка</div>
+      <div class="menu-link" data-section="favorites"><i class="fa-solid fa-heart w-5"></i> Любимое</div>
+      <div class="menu-link" data-section="playlist"><i class="fa-solid fa-list w-5"></i> Плейлисты</div>
+      <div class="menu-link" data-section="settings"><i class="fa-solid fa-gear w-5"></i> Настройки</div>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <header>
+      <a href="#" id="profileLink" class="flex items-center gap-3 cursor-pointer">
+        <span>{{ name }}</span>
+        <img src="{{ avatar }}" class="w-10 h-10 rounded-full">
+      </a>
+    </header>
+
+    <div id="content">
+      
+      <!-- HOME -->
+      <div id="section-home">
+        <div class="hero-section">
+          <div class="hero-greeting">
+            <span class="hero-time-icon" id="heroTimeIcon">☀️</span>
+            <h1 class="hero-title" id="heroGreeting">Добрый день</h1>
+          </div>
+          <p class="hero-subtitle">{{ name }}, что послушаем сегодня?</p>
+        </div>
+
+        <div class="quick-access-section">
+          <div class="quick-access-grid">
+            <div class="quick-access-card" data-section="favorites">
+              <img src="https://i.pinimg.com/736x/5a/d6/ef/5ad6ef496c7a7c342b9b0fdf2bce426a.jpg" class="quick-access-img">
+              <span class="quick-access-title">Любимые треки</span>
+              <button class="quick-access-play"><i class="fa-solid fa-play"></i></button>
+            </div>
+            <div class="quick-access-card" data-section="music">
+              <img src="https://i.pinimg.com/564x/44/a8/65/44a865cb7e82df5c9ee165b0e2699d21.jpg" class="quick-access-img">
+              <span class="quick-access-title">Вся музыка</span>
+              <button class="quick-access-play"><i class="fa-solid fa-play"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="home-section">
+          <div class="section-header">
+            <h2 class="section-title">Недавно добавленные</h2>
+            <button class="section-more-btn" data-section="music">Все <i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+          <div class="carousel-container">
+            <button class="carousel-btn carousel-btn-left" data-target="recentTracksList"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="carousel-wrapper">
+              <div class="carousel-track" id="recentTracksList"></div>
+            </div>
+            <button class="carousel-btn carousel-btn-right" data-target="recentTracksList"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+
+        <div class="home-section">
+          <div class="section-header">
+            <h2 class="section-title">Случайный микс</h2>
+            <button class="section-refresh-btn" id="refreshRandomBtn"><i class="fa-solid fa-shuffle"></i> Обновить</button>
+          </div>
+          <div class="carousel-container">
+            <button class="carousel-btn carousel-btn-left" data-target="randomTracksList"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="carousel-wrapper">
+              <div class="carousel-track" id="randomTracksList"></div>
+            </div>
+            <button class="carousel-btn carousel-btn-right" data-target="randomTracksList"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+
+        <div class="home-section">
+          <div class="section-header">
+            <h2 class="section-title">Ваши любимые</h2>
+            <button class="section-more-btn" data-section="favorites">Все <i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+          <div class="carousel-container">
+            <button class="carousel-btn carousel-btn-left" data-target="favoritesPreviewList"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="carousel-wrapper">
+              <div class="carousel-track" id="favoritesPreviewList"></div>
+            </div>
+            <button class="carousel-btn carousel-btn-right" data-target="favoritesPreviewList"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+
+        <div class="home-section">
+          <div class="section-header">
+            <h2 class="section-title">Исполнители</h2>
+          </div>
+          <div class="carousel-container">
+            <button class="carousel-btn carousel-btn-left" data-target="artistsList"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="carousel-wrapper">
+              <div class="carousel-track" id="artistsList"></div>
+            </div>
+            <button class="carousel-btn carousel-btn-right" data-target="artistsList"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+
+        <div style="height: 50px;"></div>
+      </div>
+
+      <!-- PROFILE -->
+      <div id="section-profile" class="hidden">
+        <div class="profile-header" style="background-image: url('{{ banner }}');">
+          <div class="profile-info">
+            <img src="{{ avatar }}" class="profile-avatar">
+            <div>
+              <h1 class="profile-name">{{ name }}</h1>
+              <p class="profile-id">{{ user }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="profile-content">
+          <button class="menu-link" data-section="settings"><i class="fa-solid fa-pencil"></i> Редактировать</button>
+        </div>
+      </div>
+
+      <!-- SEARCH -->
+      <div id="section-search" class="hidden p-8">
+        <h2 class="text-2xl font-bold mb-4">Поиск</h2>
+        <div class="flex gap-2 mb-4">
+          <input id="searchInput" type="text" placeholder="Трек или артист..." class="form-input flex-1">
+          <button onclick="searchMusic()" class="form-button">Искать</button>
+        </div>
+        <div class="theme-card">
+          <div id="searchResults" class="track-list"></div>
+        </div>
+      </div>
+
+      <!-- MUSIC -->
+      <div id="section-music" class="hidden p-8">
+        <h2 class="text-2xl font-bold mb-4">Вся музыка</h2>
+        <p class="text-sm opacity-60 mb-4" id="trackCount">Загрузка...</p>
+        <div class="theme-card">
+          <div id="allTracksList" class="track-list"></div>
+        </div>
+      </div>
+
+      <!-- FAVORITES -->
+      <div id="section-favorites" class="hidden p-8">
+        <h2 class="text-2xl font-bold mb-4">Любимые треки</h2>
+        <div class="theme-card">
+          <div id="favoritesList" class="track-list"></div>
+        </div>
+      </div>
+
+      <!-- PLAYLIST -->
+      <div id="section-playlist" class="hidden p-8">
+        <h2 class="text-2xl font-bold mb-4">Плейлисты</h2>
+        <div class="theme-card">
+          <p class="empty-state">Пока нет плейлистов</p>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div id="section-settings" class="hidden p-8">
+        <h2 class="text-2xl font-bold mb-4">Настройки</h2>
+        <div class="flex gap-3 mb-4">
+          <button class="settings-tab-btn active" data-tab="profile">Профиль</button>
+          <button class="settings-tab-btn" data-tab="themes">Темы</button>
+        </div>
+
+        <div id="settings-profile" class="settings-tab">
+          <div class="settings-section">
+            <h3 class="settings-section-title">Имя</h3>
+            <form action="{{ url_for('update_name') }}" method="POST" class="settings-form">
+              <input type="text" name="name" value="{{ name }}" class="form-input" required>
+              <button type="submit" class="form-button">Сохранить</button>
+            </form>
+          </div>
+          <div class="settings-section">
+            <h3 class="settings-section-title">Аватар</h3>
+            <img src="{{ avatar }}" class="avatar-preview" id="avatarPreview">
+            <form action="{{ url_for('update_avatar') }}" method="POST" enctype="multipart/form-data" class="settings-form">
+              <input type="file" name="avatar" accept="image/*" class="form-input" required onchange="previewImg(this,'avatarPreview')">
+              <button type="submit" class="form-button">Загрузить</button>
+            </form>
+          </div>
+          <div class="settings-section">
+            <h3 class="settings-section-title">Баннер</h3>
+            <img src="{{ banner }}" class="banner-preview" id="bannerPreview">
+            <form action="{{ url_for('update_banner') }}" method="POST" enctype="multipart/form-data" class="settings-form">
+              <input type="file" name="banner" accept="image/*" class="form-input" required onchange="previewImg(this,'bannerPreview')">
+              <button type="submit" class="form-button">Загрузить</button>
+            </form>
+          </div>
+          <div class="settings-section">
+            <h3 class="settings-section-title">Пароль</h3>
+            <form action="{{ url_for('update_password') }}" method="POST" class="settings-form">
+              <input type="password" name="old_password" placeholder="Старый пароль" class="form-input" required>
+              <input type="password" name="new_password" placeholder="Новый пароль" class="form-input" required>
+              <button type="submit" class="form-button">Сменить</button>
+            </form>
+          </div>
+        </div>
+
+        <div id="settings-themes" class="settings-tab hidden">
+          <div class="settings-section">
+            <h3 class="settings-section-title">Тема</h3>
+            <div class="theme-circles-grid">
+              <div class="theme-circle-item"><div class="theme-circle" data-theme="light" style="background:#f3f4f6;border:1px solid #d1d5db"></div><span class="theme-circle-label">Светлая</span></div>
+              <div class="theme-circle-item"><div class="theme-circle" data-theme="dark" style="background:#1f2937"></div><span class="theme-circle-label">Тёмная</span></div>
+              <div class="theme-circle-item"><div class="theme-circle" data-theme="purple" style="background:#7e22ce"></div><span class="theme-circle-label">Фиолетовая</span></div>
+              <div class="theme-circle-item"><div class="theme-circle" data-theme="green" style="background:#10b981"></div><span class="theme-circle-label">Зелёная</span></div>
+              <div class="theme-circle-item"><div class="theme-circle" data-theme="blue" style="background:#3b82f6"></div><span class="theme-circle-label">Синяя</span></div>
+              <div class="theme-circle-item"><div class="theme-circle" data-theme="red" style="background:#ef4444"></div><span class="theme-circle-label">Красная</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section logout-section">
+          <a href="/logout" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Выйти</a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MINI PLAYER -->
+  <footer class="mini-player hidden" id="miniPlayer">
+    <div class="mini-player-content">
+      <div class="mini-player-left" id="miniPlayerLeft">
+        <img id="coverImg" src="https://via.placeholder.com/50" class="mini-player-cover">
+        <div class="mini-player-info">
+          <div id="trackTitle" class="mini-player-title">—</div>
+          <div id="trackArtist" class="mini-player-artist">—</div>
+        </div>
+        <button id="favBtn" class="mini-player-fav"><i class="fa-solid fa-heart"></i></button>
+      </div>
+      <div class="mini-player-center">
+        <div class="mini-controls">
+          <button id="shuffleBtn" class="mini-ctrl-btn"><i class="fa-solid fa-shuffle"></i></button>
+          <button id="prevBtn" class="mini-ctrl-btn"><i class="fa-solid fa-backward-step"></i></button>
+          <button id="playBtn" class="mini-play-btn"><i id="playIcon" class="fa-solid fa-play"></i></button>
+          <button id="nextBtn" class="mini-ctrl-btn"><i class="fa-solid fa-forward-step"></i></button>
+          <button id="repeatBtn" class="mini-ctrl-btn"><i id="repeatIcon" class="fa-solid fa-repeat"></i></button>
+        </div>
+        <div class="mini-progress">
+          <span id="currentTime" class="mini-time">0:00</span>
+          <input type="range" id="seekbar" class="mini-seekbar" value="0" max="100">
+          <span id="duration" class="mini-time">0:00</span>
+        </div>
+      </div>
+      <div class="mini-player-right">
+        <div class="mini-volume">
+          <button id="volumeBtn" class="mini-ctrl-btn"><i id="volumeIcon" class="fa-solid fa-volume-high"></i></button>
+          <input type="range" id="volumeSlider" class="mini-volume-slider" min="0" max="1" step="0.01" value="1">
+        </div>
+        <button id="fullscreenBtn" class="mini-ctrl-btn"><i class="fa-solid fa-expand"></i></button>
+      </div>
+    </div>
     <audio id="audioPlayer"></audio>
   </footer>
 
+  <!-- FULLSCREEN PLAYER -->
+  <div class="fullscreen-player" id="fullscreenPlayer">
+    <div class="fs-background"><img id="fsBgImage" src="" class="fs-bg-image"></div>
+    <button class="fs-close-btn" id="fsCloseBtn"><i class="fa-solid fa-chevron-down"></i></button>
+    <div class="fs-content">
+      <img id="fsCoverImg" src="" class="fs-cover">
+      <div class="fs-info-section">
+        <h1 id="fsTrackTitle" class="fs-title">—</h1>
+        <p id="fsTrackArtist" class="fs-artist">—</p>
+        <input type="range" id="fsSeekbar" class="fs-seekbar" value="0" max="100">
+        <div class="fs-time"><span id="fsCurrentTime">0:00</span><span id="fsDuration">0:00</span></div>
+        <div class="fs-controls">
+          <button id="fsShuffleBtn" class="fs-ctrl-btn"><i class="fa-solid fa-shuffle"></i></button>
+          <button id="fsPrevBtn" class="fs-ctrl-btn"><i class="fa-solid fa-backward-step"></i></button>
+          <button id="fsPlayBtn" class="fs-play-btn"><i id="fsPlayIcon" class="fa-solid fa-play"></i></button>
+          <button id="fsNextBtn" class="fs-ctrl-btn"><i class="fa-solid fa-forward-step"></i></button>
+          <button id="fsRepeatBtn" class="fs-ctrl-btn"><i class="fa-solid fa-repeat"></i></button>
+        </div>
+        <div class="fs-bottom-controls">
+          <button id="fsFavBtn" class="fs-action-btn"><i class="fa-solid fa-heart"></i></button>
+          <div class="fs-volume">
+            <button class="fs-action-btn"><i class="fa-solid fa-volume-high"></i></button>
+            <input type="range" id="fsVolumeSlider" class="fs-volume-slider" min="0" max="1" step="0.01" value="1">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function previewImg(input, id) {
+      const img = document.getElementById(id);
+      if (input.files?.[0]) {
+        const reader = new FileReader();
+        reader.onload = e => img.src = e.target.result;
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+  </script>
   <script type="module" src="{{ url_for('static', filename='music_player_js/homepage.js') }}"></script>
-  <script type="module" src="{{ url_for('static', filename='music_player_js/media-session.js') }}"></script>
   <script src="{{ url_for('static', filename='profile.js') }}"></script>
 </body>
 </html>

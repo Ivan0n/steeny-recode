@@ -1,74 +1,65 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const menuLinks = document.querySelectorAll('.menu-link');
-    const quickCards = document.querySelectorAll('.quick-card');
-    const contentSections = document.querySelectorAll('#content > div[id^="section-"]');
-    const profileLink = document.getElementById('profileLink');
+  const menuLinks = document.querySelectorAll('.menu-link');
+  const sections = document.querySelectorAll('#content > div[id^="section-"]');
+  const profileLink = document.getElementById('profileLink');
+  const settingsTabBtns = document.querySelectorAll('.settings-tab-btn');
+  const settingsTabs = document.querySelectorAll('.settings-tab');
+  const sectionMoreBtns = document.querySelectorAll('.section-more-btn');
+  const quickCards = document.querySelectorAll('.quick-access-card');
 
-    // Вкладки настроек
-    const settingsTabBtns = document.querySelectorAll('.settings-tab-btn');
-    const settingsTabs = document.querySelectorAll('.settings-tab');
+  function showSection(id) {
+    sections.forEach(s => s.classList.add('hidden'));
+    const target = document.getElementById('section-' + id);
+    if (target) target.classList.remove('hidden');
 
-    function showSection(sectionId) {
-        // Скрываем все секции
-        contentSections.forEach(section => {
-            section.classList.add('hidden');
-        });
-        // Показываем нужную
-        const activeSection = document.getElementById(`section-${sectionId}`);
-        if (activeSection) {
-            activeSection.classList.remove('hidden');
-        }
-        // Обновляем активную ссылку в меню
-        menuLinks.forEach(link => {
-            link.classList.toggle('active', link.dataset.section === sectionId);
-        });
-    }
+    menuLinks.forEach(l => l.classList.remove('active'));
+    const activeLink = document.querySelector(`.menu-link[data-section="${id}"]`);
+    if (activeLink) activeLink.classList.add('active');
 
-    // Клики по меню
-    menuLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const sectionId = link.dataset.section;
-            showSection(sectionId);
-        });
+    document.getElementById('content').scrollTop = 0;
+  }
+
+  menuLinks.forEach(l => {
+    l.addEventListener('click', e => {
+      e.preventDefault();
+      const id = l.dataset.section;
+      if (id) showSection(id);
     });
+  });
 
-    // Клики по quick-cards на главной
-    quickCards.forEach(card => {
-        card.addEventListener('click', (e) => {
-            e.preventDefault();
-            const sectionId = card.dataset.section;
-            if (sectionId) {
-                showSection(sectionId);
-            }
-        });
+  quickCards.forEach(c => {
+    c.addEventListener('click', e => {
+      e.preventDefault();
+      const id = c.dataset.section;
+      if (id) showSection(id);
     });
+  });
 
-    // Клик по профилю в шапке
-    if (profileLink) {
-        profileLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showSection('profile');
-        });
-    }
-
-    // Переключение вкладок в настройках
-    settingsTabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tabId = btn.dataset.tab;
-
-            settingsTabBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-
-            settingsTabs.forEach(tab => tab.classList.add('hidden'));
-
-            const targetTab = document.getElementById(`settings-${tabId}`);
-            if (targetTab) {
-                targetTab.classList.remove('hidden');
-            }
-        });
+  sectionMoreBtns.forEach(b => {
+    b.addEventListener('click', e => {
+      e.preventDefault();
+      const id = b.dataset.section;
+      if (id) showSection(id);
     });
+  });
 
-    // По умолчанию показываем 'home'
-    showSection('home');
+  if (profileLink) {
+    profileLink.addEventListener('click', e => {
+      e.preventDefault();
+      showSection('profile');
+    });
+  }
+
+  settingsTabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      settingsTabBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      settingsTabs.forEach(t => t.classList.add('hidden'));
+      const target = document.getElementById('settings-' + tab);
+      if (target) target.classList.remove('hidden');
+    });
+  });
+
+  showSection('home');
 });

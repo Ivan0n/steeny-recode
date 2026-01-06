@@ -1,35 +1,31 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const htmlEl = document.documentElement;
-    const themeCircles = document.querySelectorAll('.theme-circle');
-    const themes = ['light', 'dark', 'purple', 'green', 'blue', 'red'];
+  const htmlEl = document.documentElement;
+  const themeCircles = document.querySelectorAll('.theme-circle');
+  const themes = ['light', 'dark', 'purple', 'green', 'blue', 'red'];
 
-    function setTheme(theme) {
-      // Удаляем все классы тем
-      themes.forEach(t => htmlEl.classList.remove(t));
-      
-      // Добавляем нужный класс (кроме light, он по умолчанию)
-      if (theme !== 'light') {
-        htmlEl.classList.add(theme);
-      }
-      
-      localStorage.setItem('theme', theme);
-
-      // Обновляем активный кружок
-      themeCircles.forEach(circle => {
-        if (circle.dataset.theme === theme) {
-          circle.classList.add('active');
-        } else {
-          circle.classList.remove('active');
-        }
-      });
+  function setTheme(theme) {
+    // Удаляем все классы тем
+    themes.forEach(t => htmlEl.classList.remove(t));
+    
+    // Добавляем нужный класс (кроме light - он по умолчанию через CSS переменные)
+    if (theme !== 'light') {
+      htmlEl.classList.add(theme);
     }
-
-
-    const stored = localStorage.getItem('theme') || 'light';
-    setTheme(stored);
-
-    // Клики по кружкам
+    
+    localStorage.setItem('theme', theme);
+    
+    // Обновляем активный кружок
     themeCircles.forEach(circle => {
-      circle.addEventListener('click', () => setTheme(circle.dataset.theme));
+      circle.classList.toggle('active', circle.dataset.theme === theme);
     });
+  }
+
+  // Загружаем сохранённую тему
+  const stored = localStorage.getItem('theme') || 'light';
+  setTheme(stored);
+
+  // Клики по кружкам
+  themeCircles.forEach(circle => {
+    circle.addEventListener('click', () => setTheme(circle.dataset.theme));
   });
+});
